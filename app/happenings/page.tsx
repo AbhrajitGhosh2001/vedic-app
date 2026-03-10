@@ -3,9 +3,12 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { StarField } from '@/components/star-field'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Send, X, MessageCircle } from 'lucide-react'
+import { Send, X, MessageCircle, Lock } from 'lucide-react'
+import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
+import type { User } from '@supabase/supabase-js'
 import {
   PHILOSOPHERS,
   TRADITIONS,
@@ -370,17 +373,20 @@ function PhilosopherChat({
         <div className="flex items-start justify-between p-5 pb-3">
           <div className="flex items-center gap-4">
             <div
-              className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-bold shrink-0"
+              className="w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold shrink-0"
               style={{
                 background: `${philosopher.color}22`,
                 color: philosopher.color,
                 border: `2px solid ${philosopher.color}44`,
               }}
             >
-              {philosopher.name.charAt(0)}
+              {philosopher.countryFlag}
             </div>
             <div>
-              <h3 className="text-lg font-bold text-foreground">{philosopher.name}</h3>
+              <h3 className="text-lg font-bold text-foreground">
+                {philosopher.name}
+                <span className="ml-2 text-sm font-normal text-muted-foreground">{philosopher.countryFlag} {philosopher.countryName}</span>
+              </h3>
               <p className="text-sm text-muted-foreground">
                 {philosopher.tradition} &middot; {philosopher.era}
               </p>
@@ -503,7 +509,21 @@ function PhilosopherChat({
    ───────────────────────────────────────────── */
 export default function QuestionsPage() {
   const [selectedPhilosopher, setSelectedPhilosopher] = useState<Philosopher | null>(null)
+  const [user, setUser] = useState<User | null>(null)
+  const [authLoading, setAuthLoading] = useState(true)
   const chatRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user)
+      setAuthLoading(false)
+    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
+      setUser(session?.user ?? null)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
 
   function handleSelect(p: Philosopher) {
     setSelectedPhilosopher(p)
@@ -525,7 +545,7 @@ export default function QuestionsPage() {
             transition={{ duration: 0.8 }}
           >
             <h1 className="text-4xl md:text-5xl font-bold text-foreground text-balance">
-              Astrological Thought Paths
+              AI Sages
             </h1>
             <p className="text-muted-foreground mt-3 max-w-2xl mx-auto leading-relaxed text-balance">
               Select a philosopher or tradition on the map below. Ask them any
@@ -536,83 +556,109 @@ export default function QuestionsPage() {
         </div>
       </div>
 
-      {/* Flat-earth circle */}
-      <div className="relative z-10 px-4 pb-4">
-        <div className="max-w-3xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.92 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3, duration: 0.8 }}
-          >
-            <FlatEarthCircle
-              selectedPhilosopher={selectedPhilosopher}
-              onSelect={handleSelect}
-            />
-          </motion.div>
-
-          {/* Stats line */}
-          <p className="text-center text-xs text-muted-foreground/50 mt-2 tracking-widest">
-            12 Major Traditions &middot; {PHILOSOPHERS.length} Philosophers &middot; 4,000+ Years of Astrological Thought
-          </p>
-        </div>
-      </div>
-
-      {/* Philosopher selector chips (mobile-friendly) */}
-      <div className="relative z-10 px-4 pb-6">
-        <div className="max-w-3xl mx-auto">
-          <div className="flex flex-wrap justify-center gap-2">
-            {PHILOSOPHERS.map((p) => {
-              const isSelected = selectedPhilosopher?.id === p.id
-              return (
-                <button
-                  key={p.id}
-                  onClick={() => handleSelect(p)}
-                  className="px-3 py-1.5 rounded-full text-xs font-medium transition-all"
-                  style={{
-                    background: isSelected ? `${p.color}33` : 'rgba(255,255,255,0.04)',
-                    color: isSelected ? p.color : 'rgba(255,255,255,0.5)',
-                    border: `1px solid ${isSelected ? `${p.color}66` : 'rgba(255,255,255,0.08)'}`,
-                  }}
-                >
-                  {p.name}
-                </button>
-              )
-            })}
+      {/* Auth gate */}
+      {!authLoading && !user ? (
+        <div className="relative z-10 px-4 pb-16">
+          <div className="max-w-md mx-auto mt-8">
+            <Card className="bg-card/40 border-border/30 backdrop-blur-sm p-10 text-center">
+              <Lock size={40} className="mx-auto mb-4 text-muted-foreground/50" />
+              <h2 className="text-xl font-bold text-foreground mb-2">Sign in to consult the sages</h2>
+              <p className="text-muted-foreground text-sm mb-6 leading-relaxed">
+                Create a free account to access all 18 AI sages from 12 ancient civilizations.
+              </p>
+              <div className="flex flex-col gap-3">
+                <Button asChild className="bg-[#9b8bb8] hover:bg-[#8a7aa7] text-background font-medium">
+                  <Link href="/auth/sign-up">Create Account</Link>
+                </Button>
+                <Button asChild variant="ghost" className="text-muted-foreground">
+                  <Link href="/auth/login">Sign In</Link>
+                </Button>
+              </div>
+            </Card>
           </div>
         </div>
-      </div>
+      ) : (
+        <>
+          {/* Flat-earth circle */}
+          <div className="relative z-10 px-4 pb-4">
+            <div className="max-w-3xl mx-auto">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.92 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.3, duration: 0.8 }}
+              >
+                <FlatEarthCircle
+                  selectedPhilosopher={selectedPhilosopher}
+                  onSelect={handleSelect}
+                />
+              </motion.div>
 
-      {/* Chat panel */}
-      <div ref={chatRef} className="relative z-10 px-4 pb-24">
-        <div className="max-w-2xl mx-auto">
-          <AnimatePresence mode="wait">
-            {selectedPhilosopher && (
-              <PhilosopherChat
-                key={selectedPhilosopher.id}
-                philosopher={selectedPhilosopher}
-                onClose={() => setSelectedPhilosopher(null)}
-              />
-            )}
-          </AnimatePresence>
-
-          {!selectedPhilosopher && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.8 }}
-              className="text-center py-12"
-            >
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted/10 flex items-center justify-center border border-border/20">
-                <MessageCircle size={28} className="text-muted-foreground/40" />
-              </div>
-              <p className="text-muted-foreground text-sm max-w-md mx-auto">
-                Click on any philosopher dot in the circle above, or select one from the chips,
-                to begin a conversation across time and tradition.
+              {/* Stats line */}
+              <p className="text-center text-xs text-muted-foreground/50 mt-2 tracking-widest">
+                12 Major Traditions &middot; {PHILOSOPHERS.length} Philosophers &middot; 4,000+ Years of Astrological Thought
               </p>
-            </motion.div>
-          )}
-        </div>
-      </div>
+            </div>
+          </div>
+
+          {/* Philosopher selector chips */}
+          <div className="relative z-10 px-4 pb-6">
+            <div className="max-w-3xl mx-auto">
+              <div className="flex flex-wrap justify-center gap-2">
+                {PHILOSOPHERS.map((p) => {
+                  const isSelected = selectedPhilosopher?.id === p.id
+                  return (
+                    <button
+                      key={p.id}
+                      onClick={() => handleSelect(p)}
+                      className="px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5"
+                      style={{
+                        background: isSelected ? `${p.color}33` : 'rgba(255,255,255,0.04)',
+                        color: isSelected ? p.color : 'rgba(255,255,255,0.5)',
+                        border: `1px solid ${isSelected ? `${p.color}66` : 'rgba(255,255,255,0.08)'}`,
+                      }}
+                    >
+                      <span>{p.countryFlag}</span>
+                      <span>{p.name}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Chat panel */}
+          <div ref={chatRef} className="relative z-10 px-4 pb-24">
+            <div className="max-w-2xl mx-auto">
+              <AnimatePresence mode="wait">
+                {selectedPhilosopher && (
+                  <PhilosopherChat
+                    key={selectedPhilosopher.id}
+                    philosopher={selectedPhilosopher}
+                    onClose={() => setSelectedPhilosopher(null)}
+                  />
+                )}
+              </AnimatePresence>
+
+              {!selectedPhilosopher && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.8 }}
+                  className="text-center py-12"
+                >
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted/10 flex items-center justify-center border border-border/20">
+                    <MessageCircle size={28} className="text-muted-foreground/40" />
+                  </div>
+                  <p className="text-muted-foreground text-sm max-w-md mx-auto">
+                    Click on any philosopher dot in the circle above, or select one from the chips,
+                    to begin a conversation across time and tradition.
+                  </p>
+                </motion.div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   )
 }

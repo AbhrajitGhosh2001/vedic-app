@@ -42,7 +42,7 @@ export function NavHeader() {
   const navLinks = [
     { href: '/', label: 'HOME' },
     { href: '/wisdom', label: 'WISDOM' },
-    { href: '/happenings', label: 'HAPPENINGS' },
+    { href: '/happenings', label: 'AI SAGES', authRequired: true },
     { href: '/newsletter', label: 'NEWSLETTER' },
     { href: '/profile/insights', label: 'INSIGHTS', authRequired: true },
     { href: '/matches', label: 'CONNECT', authRequired: true },
