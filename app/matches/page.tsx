@@ -1,16 +1,15 @@
 'use client'
 
 import React from "react"
-
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { StarField } from '@/components/star-field'
-import { Heart, MessageCircle, Sparkles, Users } from 'lucide-react'
+import { Heart, MessageCircle, Sparkles, Users, MapPin, Filter } from 'lucide-react'
 import { calculateGunaMilan } from '@/lib/guna-milan'
 import { getZodiacSymbol } from '@/lib/birth-chart'
 import { createClient } from '@/lib/supabase/client'
@@ -28,18 +27,64 @@ interface Profile {
   nakshatra?: number
   nakshatra_name?: string
   gender?: string
+  birth_location?: string
+  birth_location_lat?: number
+  birth_location_lng?: number
 }
 
 interface MatchWithScore {
   profile: Profile
   compatibility: ReturnType<typeof calculateGunaMilan>
+  distance?: number
+}
+
+type SortBy = 'compatibility' | 'gender' | 'distance'
+
+// Calculate distance between two coordinates in km
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371 // Earth's radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLon = (lon2 - lon1) * Math.PI / 180
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  return R * c
 }
 
 export default function MatchesPage() {
   const router = useRouter()
   const [currentProfile, setCurrentProfile] = useState<Profile | null>(null)
   const [matches, setMatches] = useState<MatchWithScore[]>([])
+  const [filteredMatches, setFilteredMatches] = useState<MatchWithScore[]>([])
   const [loading, setLoading] = useState(true)
+  const [sortBy, setSortBy] = useState<SortBy>('compatibility')
+  const [selectedGender, setSelectedGender] = useState<string | null>(null)
+
+  // Apply sorting and filtering
+  useEffect(() => {
+    let result = [...matches]
+
+    // Filter by gender if selected
+    if (selectedGender && selectedGender !== 'all') {
+      result = result.filter(m => m.profile.gender?.toLowerCase() === selectedGender.toLowerCase())
+    }
+
+    // Sort based on selected option
+    if (sortBy === 'compatibility') {
+      result.sort((a, b) => b.compatibility.percentage - a.compatibility.percentage)
+    } else if (sortBy === 'distance') {
+      result.sort((a, b) => (a.distance || Infinity) - (b.distance || Infinity))
+    } else if (sortBy === 'gender') {
+      result.sort((a, b) => {
+        const genderA = a.profile.gender || 'unknown'
+        const genderB = b.profile.gender || 'unknown'
+        return genderA.localeCompare(genderB)
+      })
+    }
+
+    setFilteredMatches(result)
+  }, [matches, sortBy, selectedGender])
 
   useEffect(() => {
     async function loadMatches() {
@@ -73,22 +118,34 @@ export default function MatchesPage() {
         .not('moon_sign', 'is', null)
 
       if (allProfiles && allProfiles.length > 0) {
-        // Calculate compatibility with each profile
+        // Calculate compatibility and distance with each profile
         const calculatedMatches = allProfiles
-          .map((profile) => ({
-            profile,
-            compatibility: calculateGunaMilan(
-              {
-                moonSign: myProfile.moon_sign || 'Aries',
-                nakshatra: myProfile.nakshatra || 1,
-              },
-              {
-                moonSign: profile.moon_sign || 'Aries',
-                nakshatra: profile.nakshatra || 1,
-              }
-            ),
-          }))
-          .sort((a, b) => b.compatibility.percentage - a.compatibility.percentage)
+          .map((profile) => {
+            const distance = myProfile.birth_location_lat && myProfile.birth_location_lng &&
+              profile.birth_location_lat && profile.birth_location_lng
+              ? calculateDistance(
+                myProfile.birth_location_lat,
+                myProfile.birth_location_lng,
+                profile.birth_location_lat,
+                profile.birth_location_lng
+              )
+              : undefined
+
+            return {
+              profile,
+              compatibility: calculateGunaMilan(
+                {
+                  moonSign: myProfile.moon_sign || 'Aries',
+                  nakshatra: myProfile.nakshatra || 1,
+                },
+                {
+                  moonSign: profile.moon_sign || 'Aries',
+                  nakshatra: profile.nakshatra || 1,
+                }
+              ),
+              distance,
+            }
+          })
 
         setMatches(calculatedMatches)
       }
@@ -116,41 +173,84 @@ export default function MatchesPage() {
     <div className="min-h-screen bg-background relative">
       <StarField />
 
-      <div className="relative z-10 container max-w-4xl mx-auto px-6 py-12">
+      <div className="relative z-10 container max-w-7xl mx-auto px-4 py-12">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between mb-8"
+          className="flex items-center justify-between mb-8 flex-wrap gap-4"
         >
-          <Button variant="ghost" size="sm" asChild>
-            <Link href="/dashboard">
-              <Users className="w-4 h-4 mr-2" />
-              My Profile
-            </Link>
-          </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/messages">
-              <MessageCircle className="w-4 h-4 mr-2" />
-              Messages
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/dashboard">
+                <Users className="w-4 h-4 mr-2" />
+                My Profile
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/messages">
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Messages
+              </Link>
+            </Button>
+          </div>
         </motion.div>
 
+        {/* Title */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
+          className="mb-8"
         >
           <h1 className="text-4xl font-light mb-2">Your Cosmic Matches</h1>
           <p className="text-muted-foreground">
-            Sorted by Guna Milan compatibility score
+            {filteredMatches.length} potential {filteredMatches.length === 1 ? 'match' : 'matches'} found
           </p>
         </motion.div>
 
+        {/* Filters and Sort */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.1 }}
+          className="mb-8 flex flex-wrap gap-3 items-center"
+        >
+          <Filter className="w-4 h-4 text-muted-foreground" />
+          
+          {/* Sort By */}
+          <div className="flex gap-2">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortBy)}
+              className="px-3 py-2 rounded-lg bg-card/40 border border-border/30 text-sm hover:bg-card/60 transition-colors cursor-pointer"
+            >
+              <option value="compatibility">Sort by Compatibility</option>
+              <option value="distance">Sort by Distance</option>
+              <option value="gender">Sort by Gender</option>
+            </select>
+          </div>
+
+          {/* Gender Filter */}
+          <div className="flex gap-2">
+            {['all', 'male', 'female', 'other'].map((gender) => (
+              <button
+                key={gender}
+                onClick={() => setSelectedGender(gender === 'all' ? null : gender)}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                  (gender === 'all' && !selectedGender) || selectedGender === gender
+                    ? 'bg-primary/30 border border-primary/50 text-foreground'
+                    : 'bg-card/40 border border-border/30 text-muted-foreground hover:bg-card/60'
+                }`}
+              >
+                {gender.charAt(0).toUpperCase() + gender.slice(1)}
+              </button>
+            ))}
+          </div>
+        </motion.div>
+
         {/* Matches Grid */}
-        <div className="space-y-4">
-          {matches.map((match, index) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filteredMatches.map((match, index) => (
             <MatchCard
               key={match.profile.id}
               match={match}
@@ -160,12 +260,12 @@ export default function MatchesPage() {
           ))}
         </div>
 
-        {matches.length === 0 && (
-          <Card className="bg-card/80 backdrop-blur-sm border-border/50 p-8 text-center">
+        {filteredMatches.length === 0 && (
+          <Card className="bg-card/80 backdrop-blur-sm border-border/50 p-12 text-center">
             <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No matches yet</h3>
-            <p className="text-muted-foreground mb-4">
-              Be patient - your cosmic match will appear when the stars align!
+            <h3 className="text-lg font-semibold mb-2">No matches found</h3>
+            <p className="text-muted-foreground">
+              {selectedGender ? 'Try adjusting your filters' : 'Be patient - your cosmic match will appear when the stars align!'}
             </p>
           </Card>
         )}
@@ -184,10 +284,16 @@ function MatchCard({
   currentProfileId: string
 }) {
   const router = useRouter()
-  const { profile, compatibility } = match
+  const { profile, compatibility, distance } = match
   const [startingChat, setStartingChat] = useState(false)
 
   const getScoreColor = (percentage: number) => {
+    if (percentage >= 75) return 'from-green-500/40 to-green-600/20'
+    if (percentage >= 50) return 'from-primary/40 to-primary/20'
+    return 'from-orange-500/40 to-orange-600/20'
+  }
+
+  const getScoreTextColor = (percentage: number) => {
     if (percentage >= 75) return 'text-green-400'
     if (percentage >= 50) return 'text-primary'
     return 'text-orange-400'
@@ -209,93 +315,105 @@ function MatchCard({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.1 }}
+      transition={{ delay: index * 0.05 }}
     >
-      <Card className="bg-card/80 backdrop-blur border-border/50 hover:border-primary/30 transition-all group">
-        <CardContent className="p-6">
-          <div className="flex items-center gap-4 md:gap-6">
-            {/* Avatar */}
-            <Link href={`/compatibility/${currentProfileId}/${profile.id}`} className="shrink-0">
-              <div className="w-14 h-14 md:w-16 md:h-16 rounded-full overflow-hidden bg-primary/20 flex items-center justify-center">
-                {profile.profile_image_url ? (
-                  <Image
-                    src={profile.profile_image_url || "/placeholder.svg"}
-                    alt={profile.first_name}
-                    width={64}
-                    height={64}
-                    className="object-cover w-full h-full"
-                  />
-                ) : (
-                  <span className="text-2xl text-primary">
-                    {profile.first_name?.charAt(0) || '?'}
-                  </span>
-                )}
+      <Link href={`/compatibility/${currentProfileId}/${profile.id}`}>
+        <Card className="bg-card/40 backdrop-blur border-border/30 hover:border-primary/50 transition-all group h-full overflow-hidden cursor-pointer">
+          {/* Profile Image Container */}
+          <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-primary/20 to-primary/10 group-hover:from-primary/30 group-hover:to-primary/20 transition-colors">
+            {profile.profile_image_url ? (
+              <Image
+                src={profile.profile_image_url}
+                alt={profile.first_name}
+                fill
+                className="object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <span className="text-6xl text-primary/20">
+                  {profile.first_name?.charAt(0) || '?'}
+                </span>
               </div>
-            </Link>
+            )}
 
-            {/* Info */}
-            <Link href={`/compatibility/${currentProfileId}/${profile.id}`} className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <h3 className="text-lg md:text-xl font-medium truncate">
-                  {profile.first_name} {profile.last_name || ''}
-                </h3>
-                {profile.age && (
-                  <span className="text-muted-foreground">{profile.age}</span>
-                )}
-              </div>
-              <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                {profile.sun_sign && (
-                  <span className="flex items-center gap-1">
-                    <span>{getZodiacSymbol(profile.sun_sign)}</span>
-                    {profile.sun_sign}
-                  </span>
-                )}
-                {profile.nakshatra_name && (
-                  <>
-                    <span className="text-border">|</span>
-                    <span className="hidden sm:inline">{profile.nakshatra_name}</span>
-                  </>
-                )}
-              </div>
-              {profile.bio && (
-                <p className="text-sm text-muted-foreground mt-2 line-clamp-1 hidden sm:block">
-                  {profile.bio}
-                </p>
-              )}
-            </Link>
-
-            {/* Score */}
-            <div className="text-center shrink-0">
-              <div className={`text-2xl md:text-3xl font-light ${getScoreColor(compatibility.percentage)}`}>
+            {/* Compatibility Badge */}
+            <div className={`absolute top-3 right-3 bg-gradient-to-br ${getScoreColor(compatibility.percentage)} backdrop-blur-sm border border-white/10 rounded-lg px-3 py-1.5`}>
+              <div className={`text-lg font-bold ${getScoreTextColor(compatibility.percentage)}`}>
                 {compatibility.percentage}%
               </div>
-              <div className="text-xs text-muted-foreground">
-                {compatibility.totalScore}/36
-              </div>
+            </div>
+          </div>
+
+          {/* Profile Info */}
+          <div className="p-4 space-y-3">
+            {/* Name and Age */}
+            <div>
+              <h3 className="text-lg font-semibold truncate group-hover:text-primary transition-colors">
+                {profile.first_name} {profile.last_name ? profile.last_name.charAt(0) + '.' : ''}
+              </h3>
+              {profile.age && (
+                <p className="text-sm text-muted-foreground">{profile.age} years old</p>
+              )}
             </div>
 
-            {/* Actions */}
-            <div className="flex flex-col gap-2 shrink-0">
-              <Button
-                size="sm"
-                variant="outline"
+            {/* Astrological Info */}
+            <div className="space-y-2 text-sm text-muted-foreground">
+              {profile.gender && (
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Gender:</span>
+                  <span className="font-medium text-foreground capitalize">{profile.gender}</span>
+                </div>
+              )}
+              
+              {profile.sun_sign && (
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Sun Sign:</span>
+                  <span className="font-medium text-foreground">
+                    {getZodiacSymbol(profile.sun_sign)} {profile.sun_sign}
+                  </span>
+                </div>
+              )}
+
+              {profile.nakshatra_name && (
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Nakshatra:</span>
+                  <span className="font-medium text-foreground text-xs">{profile.nakshatra_name}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Location and Distance */}
+            {profile.birth_location && (
+              <div className="flex items-center gap-1.5 text-sm text-muted-foreground pt-1 border-t border-border/20">
+                <MapPin className="w-4 h-4 flex-shrink-0" />
+                <div className="flex-1 truncate">
+                  <span className="truncate block text-xs">{profile.birth_location}</span>
+                  {distance !== undefined && (
+                    <span className="text-xs text-muted-foreground/70">
+                      {distance < 1 ? '&lt;1 km' : `${Math.round(distance)} km away`}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex gap-2 pt-2">
+              <button
                 onClick={handleMessage}
                 disabled={startingChat}
-                className="gap-1 bg-transparent"
+                className="flex-1 px-3 py-2 rounded-lg bg-primary/20 hover:bg-primary/30 disabled:opacity-50 transition-colors text-sm font-medium flex items-center justify-center gap-1.5"
               >
                 <MessageCircle className="w-4 h-4" />
                 <span className="hidden sm:inline">Message</span>
-              </Button>
-              <Link href={`/compatibility/${currentProfileId}/${profile.id}`}>
-                <Button size="sm" variant="ghost" className="w-full gap-1">
-                  <Heart className="w-4 h-4" />
-                  <span className="hidden sm:inline">Details</span>
-                </Button>
-              </Link>
+              </button>
+              <button className="px-3 py-2 rounded-lg bg-card/40 hover:bg-card/60 transition-colors border border-border/20">
+                <Heart className="w-4 h-4" />
+              </button>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </Card>
+      </Link>
     </motion.div>
   )
 }
