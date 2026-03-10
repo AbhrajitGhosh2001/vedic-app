@@ -3,62 +3,93 @@ import { PHILOSOPHERS } from '@/lib/astrological-philosophers'
 export const maxDuration = 30
 
 export async function POST(req: Request) {
-  try {
-    const body = await req.json()
-    const { messages, philosopherId } = body
+  const { messages, philosopherId } = await req.json()
 
-    if (!philosopherId) {
-      return new Response(JSON.stringify({ error: 'philosopherId is required' }), { status: 400 })
-    }
+  const philosopher = PHILOSOPHERS.find((p) => p.id === philosopherId)
 
-    if (!messages || messages.length === 0) {
-      return new Response(JSON.stringify({ error: 'messages are required' }), { status: 400 })
-    }
-
-    const philosopher = PHILOSOPHERS.find((p) => p.id === philosopherId)
-
-    if (!philosopher) {
-      return new Response(JSON.stringify({ error: 'Philosopher not found' }), { status: 404 })
-    }
-
-    // Call Groq API directly
-    const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages: [
-          {
-            role: 'system',
-            content: `${philosopher.systemPrompt}\n\nYou are ${philosopher.name} (${philosopher.era}), a figure from the ${philosopher.tradition} astrological tradition. ${philosopher.description}\n\nAlways stay in character. Answer the user's question from your unique astrological and philosophical perspective. Be insightful, wise, and true to your tradition. Format your response with clear paragraphs.`,
-          },
-          ...messages,
-        ],
-        stream: true,
-        temperature: 0.7,
-        max_tokens: 1024,
-      }),
+  if (!philosopher) {
+    return new Response(JSON.stringify({ error: 'Philosopher not found' }), { 
+      status: 404,
+      headers: { 'Content-Type': 'application/json' }
     })
-
-    if (!groqResponse.ok) {
-      const error = await groqResponse.json()
-      return new Response(JSON.stringify({ error: error.error?.message || 'Groq API error' }), { status: 500 })
-    }
-
-    // Stream the response directly to the client
-    return new Response(groqResponse.body, {
-      headers: {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-      },
-    })
-  } catch (error) {
-    console.error('[v0] Error in philosopher-chat:', error)
-    const msg = error instanceof Error ? error.message : 'Unknown error'
-    return new Response(JSON.stringify({ error: msg }), { status: 500 })
   }
+
+  // Format messages for Groq API
+  const formattedMessages = messages.map((msg: any) => {
+    // Handle both parts format and content format
+    let content = ''
+    if (msg.parts) {
+      content = msg.parts
+        .filter((p: any) => p.type === 'text')
+        .map((p: any) => p.text)
+        .join('')
+    } else if (msg.content) {
+      content = msg.content
+    } else if (msg.text) {
+      content = msg.text
+    }
+    return { role: msg.role, content }
+  })
+
+  const systemPrompt = `${philosopher.systemPrompt}\n\nYou are ${philosopher.name} (${philosopher.era}), a figure from the ${philosopher.tradition} astrological tradition. ${philosopher.description}\n\nAlways stay in character. Answer the user's question from your unique astrological and philosophical perspective. Be insightful, wise, and true to your tradition. Format your response with clear paragraphs.`
+
+  // Call Groq API directly
+  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        ...formattedMessages,
+      ],
+      stream: true,
+    }),
+  })
+
+  if (!response.ok) {
+    const error = await response.text()
+    return new Response(JSON.stringify({ error: `Groq API error: ${error}` }), {
+      status: response.status,
+      headers: { 'Content-Type': 'application/json' }
+    })
+  }
+
+  // Create a transform stream to convert Groq SSE to a simple text stream
+  const encoder = new TextEncoder()
+  const decoder = new TextDecoder()
+
+  const transformStream = new TransformStream({
+    async transform(chunk, controller) {
+      const text = decoder.decode(chunk, { stream: true })
+      const lines = text.split('\n')
+      
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6)
+          if (data === '[DONE]') continue
+          
+          try {
+            const parsed = JSON.parse(data)
+            const content = parsed.choices?.[0]?.delta?.content
+            if (content) {
+              controller.enqueue(encoder.encode(content))
+            }
+          } catch {
+            // Ignore parse errors
+          }
+        }
+      }
+    }
+  })
+
+  return new Response(response.body?.pipeThrough(transformStream), {
+    headers: {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'no-cache',
+    },
+  })
 }
