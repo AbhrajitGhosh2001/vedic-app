@@ -73,14 +73,18 @@ export async function getOrCreateConversation(partnerId: string) {
   }
 
   // Check if conversation already exists
-  const { data: existing } = await supabase
+  const { data: existing, error: fetchError } = await supabase
     .from('conversations')
     .select('id')
     .or(`and(user1_id.eq.${user.id},user2_id.eq.${partnerId}),and(user1_id.eq.${partnerId},user2_id.eq.${user.id})`)
-    .single()
 
-  if (existing) {
-    return { conversationId: existing.id }
+  if (fetchError) {
+    console.error('[v0] Error fetching conversations:', fetchError)
+  }
+
+  // If conversation exists, return it
+  if (existing && existing.length > 0) {
+    return { conversationId: existing[0].id }
   }
 
   // Create new conversation
