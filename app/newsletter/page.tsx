@@ -51,6 +51,8 @@ interface DailyPrediction {
   challenges: string[]
   guidance: string
   dailyScore: number
+  bestTimings: string[]
+  muhurtaWindows: Array<{ time: string; activity: string }>
 }
 
 interface UserProfile {
@@ -167,6 +169,8 @@ export default function DailyPredictionPage() {
         challenges: enginePrediction.challenges,
         guidance: enginePrediction.dailyGuidance,
         dailyScore: Math.round(enginePrediction.energyIndex.score),
+        bestTimings: enginePrediction.bestTimings,
+        muhurtaWindows: enginePrediction.muhurtaWindows,
       }
 
       // Simulate slight delay for processing feel
