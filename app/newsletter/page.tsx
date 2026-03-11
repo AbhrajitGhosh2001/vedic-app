@@ -1,30 +1,24 @@
 'use client'
 
-import React from "react"
-
+import React from 'react'
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { Checkout } from '@/components/checkout'
 import { 
   Sparkles, 
   Calendar, 
   Heart, 
   Moon, 
   Star,
-  TrendingUp,
-  Mail,
-  Check,
   Zap,
-  Gift
+  TrendingUp,
+  AlertCircle,
+  Target,
+  Lightbulb
 } from 'lucide-react'
-import Link from 'next/link'
-import { sendTestNewsletterSignup } from '@/app/actions/test-newsletter'
-import { generateAndSendTodayNewsletter } from '@/app/actions/send-newsletter'
 
 const TIMEZONES = [
   { value: 'America/New_York', label: 'Eastern Time (ET)' },
@@ -34,475 +28,387 @@ const TIMEZONES = [
   { value: 'America/Phoenix', label: 'Arizona (MST)' },
   { value: 'Europe/London', label: 'London (GMT)' },
   { value: 'Europe/Paris', label: 'Paris (CET)' },
+  { value: 'Europe/Berlin', label: 'Berlin (CET)' },
   { value: 'Asia/Tokyo', label: 'Tokyo (JST)' },
   { value: 'Asia/Shanghai', label: 'Shanghai (CST)' },
   { value: 'Asia/Kolkata', label: 'India (IST)' },
+  { value: 'Asia/Dubai', label: 'Dubai (GST)' },
   { value: 'Australia/Sydney', label: 'Sydney (AEDT)' },
+  { value: 'Australia/Melbourne', label: 'Melbourne (AEDT)' },
 ]
 
-export default function NewsletterPage() {
-  const [email, setEmail] = useState('')
+interface DailyPrediction {
+  cosmicWeather: string
+  personalImpact: string
+  emotionalEnergy: string
+  opportunities: string[]
+  challenges: string[]
+  guidance: string
+  dailyScore: number
+}
+
+export default function DailyPredictionPage() {
   const [timezone, setTimezone] = useState('')
-  const [showCheckout, setShowCheckout] = useState(false)
-  const [selectedPlan, setSelectedPlan] = useState<'free' | 'ad-free'>('free')
-  const [isValidEmail, setIsValidEmail] = useState(false)
-  const [isSendingTest, setIsSendingTest] = useState(false)
-  const [testSent, setTestSent] = useState(false)
-  const [isSendingAdmin, setIsSendingAdmin] = useState(false)
-  const [adminResult, setAdminResult] = useState<{ success: boolean; message: string } | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [prediction, setPrediction] = useState<DailyPrediction | null>(null)
+  const [currentTime, setCurrentTime] = useState('')
 
   // Auto-detect user's timezone on mount
   useEffect(() => {
     const detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
     setTimezone(detectedTimezone)
-    console.log('[v0] Detected timezone:', detectedTimezone)
+    updateCurrentTime(detectedTimezone)
   }, [])
 
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setEmail(value)
-    setIsValidEmail(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
+  // Update time whenever timezone changes
+  useEffect(() => {
+    if (timezone) {
+      updateCurrentTime(timezone)
+      const interval = setInterval(() => updateCurrentTime(timezone), 60000)
+      return () => clearInterval(interval)
+    }
+  }, [timezone])
+
+  const updateCurrentTime = (tz: string) => {
+    try {
+      const now = new Date()
+      const timeStr = new Intl.DateTimeFormat('en-US', {
+        timeZone: tz,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      }).format(now)
+      setCurrentTime(timeStr)
+    } catch (error) {
+      console.error('[v0] Error formatting time:', error)
+    }
   }
 
-  const handleSubscribe = () => {
-    if (isValidEmail) {
-      if (selectedPlan === 'free') {
-        // For free plan, just signup without checkout
-        handleFreeSubscribe()
-      } else {
-        // For ad-free, show checkout
-        setShowCheckout(true)
+  const generatePrediction = async () => {
+    if (!timezone) return
+
+    setIsLoading(true)
+    try {
+      // Simulate API call to generate daily prediction
+      // In a real implementation, this would call an endpoint with birth chart data
+      const mockPrediction: DailyPrediction = {
+        cosmicWeather: `Today's cosmic energy is uniquely shaped by the Moon transiting through a powerful phase in your timezone (${timezone.split('/')[1]}). The planetary alignment suggests a day of heightened intuition and emotional clarity. Mercury's favorable position indicates excellent communication opportunities, while Venus brings warmth to relationships.`,
+        personalImpact: `For you personally, today's transits create a harmonious alignment with your natal chart. The current Moon position activates your emotional intelligence, making this an ideal time for important conversations and decision-making. Mars energy supports assertiveness in pursuing your goals, though patience may be required in the afternoon.`,
+        emotionalEnergy: `Your emotional landscape today is tender yet resilient. The Moon's current Nakshatra suggests introspection and intuitive wisdom. You may find yourself drawn to spiritual practices or meaningful connections. Allow yourself to feel deeply while maintaining healthy boundaries. Trust your instincts—they're particularly sharp today.`,
+        opportunities: [
+          'Communication breakthroughs with important people',
+          'Creative projects gaining momentum',
+          'Financial decisions favoring your growth',
+          'Spiritual or meditative practices proving beneficial',
+          'Healing old emotional wounds through forgiveness'
+        ],
+        challenges: [
+          'Potential scattered energy in the morning—ground yourself',
+          'Others may project their emotions onto you—maintain boundaries',
+          'Avoid major financial commitments without consulting trusted advisors',
+          'Mercury retrograde shadow may cause minor miscommunications',
+          'Energy dips mid-afternoon—take a mindful break'
+        ],
+        guidance: `Make this a day of intentional presence. Start with a grounding practice (meditation, journaling, or time in nature). Schedule important communications for mid-morning when mental clarity peaks. In relationships, lead with empathy. For decisions: sleep on major choices. In the evening, reflect on what today taught you. This day is preparing you for significant growth ahead.`,
+        dailyScore: Math.floor(Math.random() * 3) + 7 // 7-9 range for demo
       }
-    }
-  }
 
-  const handleFreeSubscribe = async () => {
-    if (!isValidEmail) return
-    
-    setIsSendingTest(true)
-    try {
-      const result = await sendTestNewsletterSignup(email, timezone || 'America/New_York')
-      setTestSent(true)
-      console.log('[v0] Free subscription started:', result)
+      // Simulate slight delay for API feel
+      await new Promise(resolve => setTimeout(resolve, 800))
+      setPrediction(mockPrediction)
     } catch (error) {
-      console.error('[v0] Failed to start free subscription:', error)
-      alert('Failed to start free subscription. Please try again.')
+      console.error('[v0] Error generating prediction:', error)
+      alert('Failed to generate prediction. Please try again.')
     } finally {
-      setIsSendingTest(false)
+      setIsLoading(false)
     }
-  }
-
-  const handleAdminSendNewsletter = async () => {
-    setIsSendingAdmin(true)
-    setAdminResult(null)
-    try {
-      const result = await generateAndSendTodayNewsletter('tataighosh5@gmail.com')
-      setAdminResult(result)
-      console.log('[v0] Admin newsletter sent:', result)
-    } catch (error) {
-      console.error('[v0] Failed to send admin newsletter:', error)
-      setAdminResult({ 
-        success: false, 
-        message: error instanceof Error ? error.message : 'Failed to send newsletter'
-      })
-    } finally {
-      setIsSendingAdmin(false)
-    }
-  }
-
-  const handleTestSignup = async () => {
-    if (!isValidEmail) return
-    
-    setIsSendingTest(true)
-    try {
-      const result = await sendTestNewsletterSignup(email, timezone || 'America/New_York')
-      setTestSent(true)
-      console.log('[v0] Test newsletter signup sent:', result)
-    } catch (error) {
-      console.error('[v0] Failed to send test signup:', error)
-      alert('Failed to send test signup. Please try again.')
-    } finally {
-      setIsSendingTest(false)
-    }
-  }
-
-  const benefits = [
-    {
-      icon: Calendar,
-      title: 'Daily Forecasts',
-      description: 'Get your personalized Vedic astrology predictions every day'
-    },
-    {
-      icon: Sparkles,
-      title: 'Numerology Insights',
-      description: 'Discover hidden patterns in your life path numbers'
-    },
-    {
-      icon: Heart,
-      title: 'Love Compatibility',
-      description: 'Learn about cosmic connections and relationship timing'
-    },
-    {
-      icon: Moon,
-      title: 'Lunar Guidance',
-      description: 'Understand how moon phases affect your energy and decisions'
-    },
-    {
-      icon: Star,
-      title: 'Chinese Zodiac',
-      description: 'Ancient Eastern wisdom for career and life direction'
-    },
-    {
-      icon: TrendingUp,
-      title: 'Growth Tips',
-      description: 'Actionable advice aligned with your cosmic blueprint'
-    }
-  ]
-
-  if (showCheckout && isValidEmail) {
-    return (
-      <div className="min-h-screen bg-background text-foreground py-20 px-4">
-        <div className="max-w-4xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mb-8 text-center"
-          >
-            <h1 className="text-3xl font-bold mb-2">Complete Your Subscription</h1>
-            <p className="text-muted-foreground">Subscribing with: <span className="text-amber-400">{email}</span></p>
-          </motion.div>
-          
-          <Card className="bg-card/50 backdrop-blur border-amber-500/20">
-            <CardContent className="p-6">
-          <Checkout 
-            productId={selectedPlan === 'ad-free' ? 'cosmic-insights-ad-free' : 'cosmic-insights-free'} 
-            metadata={{ email, timezone }}
-          />
-            </CardContent>
-          </Card>
-
-          <div className="text-center mt-6">
-            <Button 
-              variant="ghost" 
-              onClick={() => setShowCheckout(false)}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              ← Change email address
-            </Button>
-          </div>
-        </div>
-      </div>
-    )
   }
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden py-20 px-4">
-        <div className="absolute inset-0 bg-gradient-to-b from-purple-950/20 to-background" />
+      {/* Header Section */}
+      <section className="relative overflow-hidden py-16 px-4 border-b border-primary/20">
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/10 to-background" />
         
         <div className="max-w-4xl mx-auto relative z-10">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="text-center mb-12"
+            className="text-center"
           >
-            <div className="inline-flex items-center gap-2 bg-amber-500/10 text-amber-400 px-4 py-2 rounded-full text-sm font-medium mb-6">
+            <div className="inline-flex items-center gap-2 bg-primary/15 text-primary px-4 py-2 rounded-full text-sm font-medium mb-6">
               <Sparkles className="w-4 h-4" />
-              Limited Time Offer
+              Daily Cosmic Guidance
             </div>
             
-            <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-amber-200 via-purple-200 to-pink-200 bg-clip-text text-transparent">
-              Cosmic Insights Newsletter
+            <h1 className="text-5xl md:text-6xl font-bold mb-4">
+              Your Daily <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Prediction</span>
             </h1>
             
-            <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Daily wisdom from Vedic astrology, numerology, and ancient Eastern traditions delivered to your inbox
+            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+              Personalized Vedic astrology insights based on your timezone and today's cosmic weather
             </p>
-
-            <div className="flex flex-col items-center justify-center gap-4 text-sm text-muted-foreground mb-10">
-              <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-400" />
-                <span>Every Day</span>
-              </div>
-              <div className="bg-green-500/20 text-green-400 px-4 py-2 rounded-full text-sm font-medium inline-flex items-center gap-2">
-                <Zap className="w-4 h-4" />
-                7-Day Free Trial Included
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="w-4 h-4 text-green-400" />
-                <span>Personalized & Actionable</span>
-              </div>
-            </div>
-
-            {/* Pricing & Plan Selection */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2 }}
-              className="mb-10"
-            >
-              <div className="grid md:grid-cols-2 gap-4 max-w-xl mx-auto mb-6">
-                {/* Free Plan */}
-                <Card 
-                  className={`cursor-pointer transition-all ${selectedPlan === 'free' ? 'bg-gradient-to-br from-green-950/40 to-green-900/20 border-green-500/50' : 'bg-card/50 border-card/50 hover:border-amber-500/20'}`}
-                  onClick={() => setSelectedPlan('free')}
-                >
-                  <CardContent className="p-6">
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-green-400 mb-2">FREE</div>
-                      <p className="text-sm text-muted-foreground mb-4">Daily insights with ads</p>
-                      <Badge className="bg-green-500/20 text-green-400">No Payment Required</Badge>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Ad-Free Plan */}
-                <Card 
-                  className={`cursor-pointer transition-all ${selectedPlan === 'ad-free' ? 'bg-gradient-to-br from-amber-950/30 to-purple-950/30 border-amber-500/50' : 'bg-card/50 border-card/50 hover:border-amber-500/20'}`}
-                  onClick={() => setSelectedPlan('ad-free')}
-                >
-                  <CardContent className="p-6">
-                    <div className="text-center">
-                      <div className="text-3xl font-bold text-amber-400 mb-2">$2.88</div>
-                      <p className="text-sm text-muted-foreground mb-2">/month</p>
-                      <p className="text-xs text-muted-foreground mb-3">No ads, premium experience</p>
-                      <Badge className="bg-amber-500/20 text-amber-400">Most Popular</Badge>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </motion.div>
-
-            {/* Email & Timezone Input */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="max-w-md mx-auto space-y-4"
-            >
-              <div className="space-y-3">
-                <div className="flex gap-3">
-                  <div className="flex-1 relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                    <Input
-                      type="email"
-                      placeholder="your@email.com"
-                      value={email}
-                      onChange={handleEmailChange}
-                      className="pl-10 h-12 bg-background/50 border-amber-500/30 focus:border-amber-500"
-                    />
-                  </div>
-                {/* Subscribe Button */}
-                <Button
-                  onClick={handleSubscribe}
-                  disabled={!isValidEmail}
-                  className={`h-12 px-8 font-semibold ${selectedPlan === 'free' ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black'}`}
-                >
-                  {selectedPlan === 'free' ? 'Subscribe Free' : 'Subscribe Now'}
-                  <Zap className="w-4 h-4 ml-2" />
-                </Button>
-                </div>
-                
-                {/* Free Test Button */}
-                {testSent ? (
-                  <div className="bg-blue-500/20 border border-blue-500/30 rounded-lg p-4">
-                    <p className="text-blue-400 font-medium">
-                      ✅ Free subscription started!
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Subject: "🌟 Welcome to Cosmic Insights Newsletter"
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-2 bg-black/20 p-2 rounded">
-                      Your daily newsletters with ads will be sent at 6:00 AM {timezone} time. Upgrade to ad-free anytime for just $2.88/month.
-                    </p>
-                  </div>
-                ) : (
-                  <Button
-                    onClick={handleFreeSubscribe}
-                    disabled={!isValidEmail || isSendingTest}
-                    variant="outline"
-                    className="w-full h-12 border-green-500/30 hover:border-green-500 hover:bg-green-500/10 text-green-400"
-                  >
-                    <Gift className="w-4 h-4 mr-2" />
-                    {isSendingTest ? 'Starting...' : 'Start Free Subscription (No Payment)'}
-                  </Button>
-                )}
-              </div>
-              
-              {/* Timezone Selector */}
-              <div className="space-y-2">
-                <label className="text-sm text-muted-foreground flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
-                  Your timezone (newsletters sent at 6:00 AM)
-                </label>
-                <Select value={timezone} onValueChange={setTimezone}>
-                  <SelectTrigger className="h-12 bg-background/50 border-amber-500/30 focus:border-amber-500">
-                    <SelectValue placeholder="Select your timezone" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TIMEZONES.map((tz) => (
-                      <SelectItem key={tz.value} value={tz.value}>
-                        {tz.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              {email && !isValidEmail && (
-                <p className="text-sm text-red-400 text-left">Please enter a valid email address</p>
-              )}
-
-              {/* TEMPORARY ADMIN BUTTON - Generate Today's Newsletter */}
-              <div className="mt-6 pt-6 border-t border-amber-500/20">
-                <p className="text-xs text-muted-foreground mb-3">ADMIN: Generate today's newsletter</p>
-                <Button
-                  onClick={handleAdminSendNewsletter}
-                  disabled={isSendingAdmin}
-                  variant="outline"
-                  className="w-full h-10 border-purple-500/30 hover:border-purple-500 hover:bg-purple-500/10 text-purple-400"
-                >
-                  {isSendingAdmin ? 'Generating...' : '📧 Send Today\'s Newsletter to Admin'}
-                </Button>
-                {adminResult && (
-                  <div className={`mt-3 p-3 rounded-lg text-sm ${adminResult.success ? 'bg-green-500/10 border border-green-500/30 text-green-400' : 'bg-red-500/10 border border-red-500/30 text-red-400'}`}>
-                    {adminResult.message}
-                  </div>
-                )}
-              </div>
-            </motion.div>
           </motion.div>
         </div>
       </section>
 
-      {/* Benefits Grid */}
-      <section className="py-20 px-4 bg-gradient-to-b from-background to-purple-950/10">
-        <div className="max-w-6xl mx-auto">
-          <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-3xl font-bold text-center mb-12"
-          >
-            What You'll Receive Every Day
-          </motion.h2>
+      {/* Main Content */}
+      <section className="py-12 px-4">
+        <div className="max-w-4xl mx-auto">
+          {!prediction ? (
+            // Timezone Selector
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <Card className="bg-gradient-to-br from-card/50 to-card/25 border-primary/30 backdrop-blur">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="w-5 h-5 text-primary" />
+                    Select Your Timezone
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <p className="text-muted-foreground">
+                    Your timezone helps us calculate accurate planetary positions and generate personalized predictions for your location.
+                  </p>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {benefits.map((benefit, index) => (
-              <motion.div
-                key={benefit.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <Card className="h-full bg-card/50 backdrop-blur border-amber-500/20 hover:border-amber-500/40 transition-colors">
-                  <CardContent className="p-6">
-                    <div className="w-12 h-12 bg-amber-500/10 rounded-lg flex items-center justify-center mb-4">
-                      <benefit.icon className="w-6 h-6 text-amber-400" />
+                  <div className="space-y-3">
+                    <label className="text-sm font-semibold text-foreground">Timezone</label>
+                    <Select value={timezone} onValueChange={setTimezone}>
+                      <SelectTrigger className="h-12 bg-background/50 border-primary/30 focus:border-primary">
+                        <SelectValue placeholder="Select your timezone" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TIMEZONES.map((tz) => (
+                          <SelectItem key={tz.value} value={tz.value}>
+                            {tz.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {currentTime && (
+                      <p className="text-xs text-muted-foreground">
+                        Current time: <span className="text-primary font-semibold">{currentTime}</span>
+                      </p>
+                    )}
+                  </div>
+
+                  <Button
+                    onClick={generatePrediction}
+                    disabled={!timezone || isLoading}
+                    className="w-full h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white font-semibold"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Sparkles className="w-4 h-4 mr-2 animate-spin" />
+                        Generating Prediction...
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="w-4 h-4 mr-2" />
+                        Get Your Daily Prediction
+                      </>
+                    )}
+                  </Button>
+
+                  <div className="p-4 rounded-lg bg-accent/10 border border-accent/30">
+                    <p className="text-sm text-muted-foreground flex items-start gap-2">
+                      <Lightbulb className="w-4 h-4 text-accent mt-0.5 flex-shrink-0" />
+                      Your personal prediction is calculated based on current planetary transits in relation to your birth chart. For best results, ensure your birth information is accurate in your profile.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ) : (
+            // Prediction Display
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="space-y-6"
+            >
+              {/* Daily Score */}
+              <Card className="bg-gradient-to-r from-primary/20 to-accent/20 border-primary/30">
+                <CardContent className="p-8 text-center">
+                  <p className="text-muted-foreground mb-2">Today's Cosmic Energy Score</p>
+                  <div className="flex items-center justify-center gap-3">
+                    <span className="text-6xl font-bold text-primary">{prediction.dailyScore}</span>
+                    <div className="flex flex-col items-start">
+                      <div className="flex gap-1">
+                        {[...Array(10)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`w-5 h-5 ${i < prediction.dailyScore ? 'fill-primary text-primary' : 'text-muted-foreground'}`}
+                          />
+                        ))}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">Out of 10</p>
                     </div>
-                    <h3 className="text-lg font-semibold mb-2">{benefit.title}</h3>
-                    <p className="text-muted-foreground text-sm">{benefit.description}</p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Cosmic Weather */}
+              <Card className="bg-gradient-to-br from-blue-950/20 to-blue-900/10 border-blue-500/30">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <Moon className="w-5 h-5 text-blue-400" />
+                    Cosmic Weather
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-foreground/80 leading-relaxed">{prediction.cosmicWeather}</p>
+                </CardContent>
+              </Card>
+
+              {/* Personal Impact */}
+              <Card className="bg-gradient-to-br from-purple-950/20 to-purple-900/10 border-purple-500/30">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <Heart className="w-5 h-5 text-purple-400" />
+                    How Today Affects You
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-foreground/80 leading-relaxed">{prediction.personalImpact}</p>
+                </CardContent>
+              </Card>
+
+              {/* Emotional Energy */}
+              <Card className="bg-gradient-to-br from-pink-950/20 to-pink-900/10 border-pink-500/30">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <Heart className="w-5 h-5 text-pink-400" />
+                    Emotional Energy Today
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-foreground/80 leading-relaxed">{prediction.emotionalEnergy}</p>
+                </CardContent>
+              </Card>
+
+              {/* Opportunities & Challenges */}
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* Opportunities */}
+                <Card className="bg-gradient-to-br from-green-950/20 to-green-900/10 border-green-500/30">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <TrendingUp className="w-5 h-5 text-green-400" />
+                      Opportunities
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-3">
+                      {prediction.opportunities.map((opp, i) => (
+                        <li key={i} className="flex items-start gap-3 text-sm">
+                          <span className="text-green-400 font-bold text-lg">✓</span>
+                          <span className="text-foreground/80">{opp}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </CardContent>
                 </Card>
-              </motion.div>
-            ))}
-          </div>
+
+                {/* Challenges */}
+                <Card className="bg-gradient-to-br from-orange-950/20 to-orange-900/10 border-orange-500/30">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <AlertCircle className="w-5 h-5 text-orange-400" />
+                      Challenges to Navigate
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-3">
+                      {prediction.challenges.map((challenge, i) => (
+                        <li key={i} className="flex items-start gap-3 text-sm">
+                          <span className="text-orange-400 font-bold text-lg">→</span>
+                          <span className="text-foreground/80">{challenge}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Guidance */}
+              <Card className="bg-gradient-to-br from-accent/20 to-accent/10 border-accent/30">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <Target className="w-5 h-5 text-accent" />
+                    Guidance for Today
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-foreground/80 leading-relaxed">{prediction.guidance}</p>
+                </CardContent>
+              </Card>
+
+              {/* Get New Prediction */}
+              <Button
+                onClick={() => setPrediction(null)}
+                variant="outline"
+                className="w-full h-12 border-primary/30 hover:border-primary"
+              >
+                <Calendar className="w-4 h-4 mr-2" />
+                Get Another Prediction
+              </Button>
+            </motion.div>
+          )}
         </div>
       </section>
 
-      {/* Sample Content Preview */}
-      <section className="py-20 px-4">
+      {/* Info Section */}
+      <section className="py-12 px-4 bg-gradient-to-b from-background to-primary/5 border-t border-primary/20">
         <div className="max-w-4xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-center mb-12"
           >
-            <h2 className="text-3xl font-bold mb-4">A Glimpse Inside</h2>
-            <p className="text-muted-foreground">Here's what a typical newsletter looks like</p>
-          </motion.div>
-
-          <Card className="bg-gradient-to-br from-purple-950/30 to-amber-950/20 border-amber-500/30">
-            <CardContent className="p-8 space-y-6">
-              <div>
-                <h3 className="text-xl font-semibold text-amber-400 mb-2">🌟 This Week's Cosmic Forecast</h3>
-                <p className="text-muted-foreground">
-                  Venus enters Pisces this Tuesday, bringing heightened romance and creative inspiration. 
-                  Moon in Ashwini nakshatra suggests new beginnings and bold initiatives...
-                </p>
-              </div>
-
-              <div>
-                <h3 className="text-xl font-semibold text-amber-400 mb-2">🔢 Numerology Spotlight</h3>
-                <p className="text-muted-foreground">
-                  If you're a Life Path 7, this week emphasizes spiritual growth and introspection. 
-                  The number 11 appears strongly, indicating divine guidance...
-                </p>
-              </div>
-
-              <div>
-                <h3 className="text-xl font-semibold text-amber-400 mb-2">❤️ Love & Relationships</h3>
-                <p className="text-muted-foreground">
-                  Fire signs experience passionate connections. Water signs should focus on emotional honesty. 
-                  Best compatibility days: Thursday and Saturday...
-                </p>
-              </div>
-
-              <div className="pt-4 border-t border-amber-500/20">
-                <p className="text-sm text-muted-foreground italic">
-                  Plus: Lucky numbers, auspicious dates, career guidance, and much more!
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 px-4 bg-gradient-to-b from-purple-950/10 to-background">
-        <div className="max-w-2xl mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <h2 className="text-3xl font-bold mb-4">Ready to Unlock Your Cosmic Potential?</h2>
-            <p className="text-muted-foreground mb-8">
-              Join hundreds of seekers receiving weekly guidance from the stars
-            </p>
+            <h2 className="text-2xl font-bold mb-8 text-center">How Daily Predictions Work</h2>
             
-            <div className="max-w-md mx-auto mb-8">
-              <div className="flex gap-3">
-                <div className="flex-1 relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <Input
-                    type="email"
-                    placeholder="your@email.com"
-                    value={email}
-                    onChange={handleEmailChange}
-                    className="pl-10 h-12 bg-background/50 border-amber-500/30 focus:border-amber-500"
-                  />
-                </div>
-                <Button
-                  onClick={handleSubscribe}
-                  disabled={!isValidEmail}
-                  className="h-12 px-8 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-semibold"
-                >
-                  Subscribe
-                </Button>
-              </div>
-            </div>
+            <div className="grid md:grid-cols-3 gap-6">
+              <Card className="bg-card/30 border-border/30">
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center mx-auto mb-4">
+                    <Calendar className="w-6 h-6 text-primary" />
+                  </div>
+                  <h3 className="font-semibold mb-2">Real-Time Transits</h3>
+                  <p className="text-sm text-muted-foreground">
+                    We calculate planetary positions for your exact timezone and time
+                  </p>
+                </CardContent>
+              </Card>
 
-            <p className="text-sm text-muted-foreground">
-              No spam, ever. Unsubscribe anytime. 
-              <Link href="/privacy" className="text-amber-400 hover:underline ml-1">
-                Privacy Policy
-              </Link>
-            </p>
+              <Card className="bg-card/30 border-border/30">
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center mx-auto mb-4">
+                    <Moon className="w-6 h-6 text-primary" />
+                  </div>
+                  <h3 className="font-semibold mb-2">Personal Chart Analysis</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Your birth chart data is analyzed against today's cosmic movements
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-card/30 border-border/30">
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center mx-auto mb-4">
+                    <Sparkles className="w-6 h-6 text-primary" />
+                  </div>
+                  <h3 className="font-semibold mb-2">Personalized Insights</h3>
+                  <p className="text-sm text-muted-foreground">
+                    You receive unique guidance based on your astrological profile
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
           </motion.div>
         </div>
       </section>
