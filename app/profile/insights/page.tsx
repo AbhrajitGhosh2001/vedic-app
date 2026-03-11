@@ -479,6 +479,76 @@ export default function ProfileInsightsPage() {
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Emotional Blueprint Section */}
+                <Card className="bg-gradient-to-br from-accent/10 to-accent/5 border-accent/20">
+                  <CardHeader>
+                    <CardTitle className="text-xl flex items-center gap-2">
+                      <Heart className="w-5 h-5 text-accent" />
+                      Emotional Blueprint
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <p className="text-foreground/80 leading-relaxed">
+                      Your Moon sign ({lagnaAndMoon.moon.rashi}) combined with your Nakshatra ({lagnaAndMoon.moon.name}) creates your unique emotional fingerprint. This is where your true instincts live - away from the mask you show the world.
+                    </p>
+                    <div className="space-y-3">
+                      <div>
+                        <h4 className="font-semibold text-accent mb-2">Emotional Nature</h4>
+                        <p className="text-foreground/70">
+                          Your {lagnaAndMoon.moon.rashi} Moon makes you someone who processes feelings through {lagnaAndMoon.moon.quality}. You find emotional security in {lagnaAndMoon.moon.meaning.split('.')[0].toLowerCase()}, and your instinctive responses guide you more than logic alone.
+                        </p>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-accent mb-2">Intuition & Inner Motivations</h4>
+                        <p className="text-foreground/70">
+                          The {lagnaAndMoon.moon.name} nakshatra gives your Moon its specific coloring. Your intuition is strongest when you {lagnaAndMoon.moon.quality.toLowerCase()}. You're drawn to situations and people that trigger your {lagnaAndMoon.moon.symbol} energy.
+                        </p>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-accent mb-2">Emotional Needs</h4>
+                        <p className="text-foreground/70">
+                          To feel emotionally fulfilled, you need {lagnaAndMoon.moon.meaning.toLowerCase()}. Your past conditioning (including childhood patterns) has shaped these needs. Understanding this helps you honor your emotional complexity rather than fight it.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Ascendant Deep Dive */}
+                <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+                  <CardHeader>
+                    <CardTitle className="text-xl flex items-center gap-2">
+                      <Sparkles className="w-5 h-5 text-primary" />
+                      Ascendant Energy & Life Approach
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <p className="text-foreground/80 leading-relaxed">
+                      Your Ascendant ({lagnaAndMoon.lagna.rashi}) in {lagnaAndMoon.lagna.name} nakshatra determines how you show up in the world and approach life's challenges.
+                    </p>
+                    <div className="space-y-3">
+                      <div>
+                        <h4 className="font-semibold text-primary mb-2">Outward Personality</h4>
+                        <p className="text-foreground/70">
+                          People see you as someone embodying {lagnaAndMoon.lagna.quality}. Your natural approach to life involves {lagnaAndMoon.lagna.meaning.split('.')[0].toLowerCase()}. This is the energy you project before anyone knows your deeper layers.
+                        </p>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-primary mb-2">Life Orientation</h4>
+                        <p className="text-foreground/70">
+                          With your {lagnaAndMoon.lagna.name} Ascendant, your fundamental approach to life is guided by the {lagnaAndMoon.lagna.symbol} energy. You're learning lessons through experiencing {lagnaAndMoon.lagna.quality.toLowerCase()} situations and finding your unique expression within that archetype.
+                        </p>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-primary mb-2">Natural Strengths</h4>
+                        <p className="text-foreground/70">
+                          Your greatest gifts in this lifetime center around {lagnaAndMoon.lagna.meaning.toLowerCase()}. You naturally attract situations that develop these strengths. Leaning into your Ascendant's nature, rather than fighting it, opens many doors.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </SectionWrapper>
           )}

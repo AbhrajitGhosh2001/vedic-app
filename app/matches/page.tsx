@@ -115,6 +115,7 @@ export default function MatchesPage() {
         .from('profiles')
         .select('*')
         .neq('id', user.id)
+        .not('moon_sign', 'is', null)
 
       if (allProfiles && allProfiles.length > 0) {
         // Calculate compatibility and distance with each profile
@@ -132,18 +133,16 @@ export default function MatchesPage() {
 
             return {
               profile,
-              compatibility: profile.moon_sign && myProfile.moon_sign
-                ? calculateGunaMilan(
-                    {
-                      moonSign: myProfile.moon_sign,
-                      nakshatra: myProfile.nakshatra || 1,
-                    },
-                    {
-                      moonSign: profile.moon_sign,
-                      nakshatra: profile.nakshatra || 1,
-                    }
-                  )
-                : { percentage: 0, totalScore: 0 }, // Default score for profiles without moon_sign
+              compatibility: calculateGunaMilan(
+                {
+                  moonSign: myProfile.moon_sign || 'Aries',
+                  nakshatra: myProfile.nakshatra || 1,
+                },
+                {
+                  moonSign: profile.moon_sign || 'Aries',
+                  nakshatra: profile.nakshatra || 1,
+                }
+              ),
               distance,
             }
           })
