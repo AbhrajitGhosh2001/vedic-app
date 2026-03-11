@@ -549,6 +549,140 @@ export default function ProfileInsightsPage() {
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Planetary Influences Section */}
+                <Card className="bg-card/30 border-border/30">
+                  <CardHeader>
+                    <CardTitle className="text-xl flex items-center gap-2">
+                      <Flame className="w-5 h-5 text-orange-400" />
+                      Planetary Forces Shaping Your Life
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <p className="text-foreground/80 leading-relaxed">
+                      Each planet in your chart carries a specific energy and intention. Their placements determine your natural drives, talents, and life themes.
+                    </p>
+                    <div className="space-y-4">
+                      {insights.planetaryPlacements.slice(0, 7).map((planet, i) => (
+                        <div key={i} className="p-4 rounded-lg bg-card/40 border border-border/20">
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="font-semibold capitalize">{planet.planet}</h4>
+                            <Badge className={strengthColors[planet.strength]}>
+                              {strengthLabels[planet.strength]}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-foreground/70 mb-2">
+                            <span className="font-medium">{planet.sign}</span> in House {planet.house}
+                          </p>
+                          <p className="text-foreground/80 leading-relaxed">{planet.interpretation}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Mars Energy & Manglik Dosha */}
+                <Card className="bg-gradient-to-br from-red-500/10 to-red-500/5 border-red-500/20">
+                  <CardHeader>
+                    <CardTitle className="text-xl flex items-center gap-2">
+                      <Flame className="w-5 h-5 text-red-400" />
+                      Mars Energy & Passion Intensity
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <p className="text-foreground/80 leading-relaxed">
+                      Mars represents your drive, passion, and assertiveness. In Vedic astrology, Mars in certain houses (1st, 2nd, 4th, 7th, 8th, 12th) creates Manglik Dosha—a powerful influence on relationships and life intensity.
+                    </p>
+                    <div className="space-y-3">
+                      <div>
+                        <h4 className="font-semibold text-red-300 mb-2">Mars Influence</h4>
+                        <p className="text-foreground/70">
+                          Your Mars placement suggests {insights.planetaryPlacements.find(p => p.planet === 'Mars')?.interpretation || 'strong willpower and determination'}. This energy fuels your passion, ambition, and competitive drive. Harness it constructively and you're unstoppable; suppressed, it becomes frustration.
+                        </p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                        <p className="text-sm text-foreground/80">
+                          <span className="font-semibold text-red-300">Note:</span> If Mars is in house 1, 2, 4, 7, 8, or 12, you may be Manglik. This intensifies passion and relationship dynamics but also indicates deep transformative capacity through love.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Navamsha (D9) Destiny Layer */}
+                <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20">
+                  <CardHeader>
+                    <CardTitle className="text-xl flex items-center gap-2">
+                      <Target className="w-5 h-5 text-purple-400" />
+                      Your Deeper Destiny (Navamsha)
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <p className="text-foreground/80 leading-relaxed">
+                      The Navamsha chart (D9) is the microscopic view of your soul's evolution and karmic maturity. While your birth chart shows the "promise," Navamsha reveals the "fruit"—how deep and lasting your relationships truly become.
+                    </p>
+                    <div className="space-y-3">
+                      <div>
+                        <h4 className="font-semibold text-purple-300 mb-2">Navamsha Lagna (Your Soul Orientation)</h4>
+                        <p className="text-foreground/70">
+                          This layer shows your soul's maturity and the deeper version of who you're becoming. It represents your refined, evolved self—the wisdom you're integrating across lifetimes.
+                        </p>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-purple-300 mb-2">Relationship Depth & Longevity</h4>
+                        <p className="text-foreground/70">
+                          Your Navamsha strongly influences marriage longevity and depth. A strong Venus and 7th lord here indicates soulmate potential—partnerships that transcend this lifetime. Weak placements suggest relationships serve karmic learning rather than permanence.
+                        </p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                        <p className="text-sm text-foreground/80">
+                          <span className="font-semibold text-purple-300">Key Truth:</span> The Navamsha reveals whether a connection is temporary growth or eternal bond. Use it to understand not just WHO you attract, but WHAT that relationship teaches your soul.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Personal Summary & Synthesis */}
+                <Card className="bg-gradient-to-br from-accent/20 to-accent/5 border-accent/30">
+                  <CardHeader>
+                    <CardTitle className="text-xl flex items-center gap-2">
+                      <Users className="w-5 h-5 text-accent" />
+                      Your Cosmic Blueprint: Synthesis
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <p className="text-foreground/80 leading-relaxed">
+                      You are a unique constellation of energies. Your Ascendant is your life mission; your Moon is your emotional truth; your planetary placements are your karmic toolkit. Together, they tell a story of who you came here to become.
+                    </p>
+                    <div className="space-y-4">
+                      <div className="p-4 rounded-lg bg-accent/5 border border-accent/20">
+                        <h4 className="font-semibold text-accent mb-2">Your Natural Talents</h4>
+                        <p className="text-foreground/70">
+                          {lagnaAndMoon.lagna.meaning} combined with your {lagnaAndMoon.moon.rashi} emotional nature creates someone uniquely skilled at {lagnaAndMoon.lagna.quality.toLowerCase()}. Your talents are not random—they're your soul's fingerprint designed for this lifetime's lessons.
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-accent/5 border border-accent/20">
+                        <h4 className="font-semibold text-accent mb-2">Your Psychological Landscape</h4>
+                        <p className="text-foreground/70">
+                          You navigate the world as a {lagnaAndMoon.lagna.name} Ascendant (outwardly), yet feel deeply through your {lagnaAndMoon.moon.name} Moon (inwardly). This can create internal tension if you suppress your emotional nature or vice versa. Integration is key—be the warrior outside, the mystic inside.
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-accent/5 border border-accent/20">
+                        <h4 className="font-semibold text-accent mb-2">Your Karmic Growth Areas</h4>
+                        <p className="text-foreground/70">
+                          Saturn in your chart points to lifelong mastery areas. Mars teaches assertiveness. Venus teaches surrender. These aren't problems—they're your soul's curriculum. Lean into them rather than avoid them, and you unlock your greatest power.
+                        </p>
+                      </div>
+                      <div className="p-4 rounded-lg bg-accent/5 border border-accent/20">
+                        <h4 className="font-semibold text-accent mb-2">Your Life Direction</h4>
+                        <p className="text-foreground/70">
+                          You are here to master the lessons encoded in your Ascendant, to honor the depth in your Moon, and to express the full spectrum of your planetary gifts. Every relationship, every failure, every success—all of it's steering you toward your highest self. Trust the timing of your life.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </SectionWrapper>
           )}
