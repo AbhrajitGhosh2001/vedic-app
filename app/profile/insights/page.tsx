@@ -402,9 +402,9 @@ export default function ProfileInsightsPage() {
             </div>
           </SectionWrapper>
 
-          {/* Ascendant & Moon Nakshatra */}
+          {/* Vedic Deep Dive */}
           {lagnaAndMoon && (
-            <SectionWrapper title="Ascendant & Moon Nakshatra" icon={Sparkles}>
+            <SectionWrapper title="Vedic Deep Dive" icon={Sparkles}>
               <div className="space-y-6">
                 {/* Lagna/Ascendant Nakshatra */}
                 <Card className="bg-card/30 border-border/30">
