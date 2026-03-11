@@ -161,9 +161,9 @@ function extractEmotionalPhases(month: number): string {
 }
 
 function calculateMonthlyScore(transits: any[], dasha: any): number {
-  const baseScore = 65
-  const transitBoost = transits.length > 3 ? 5 : 0
-  const dashaInfluence = dasha.mahaDasha === 'Jupiter' ? 10 : dasha.mahaDasha === 'Saturn' ? -5 : 0
+  const baseScore = 6.5
+  const transitBoost = transits.length > 3 ? 0.5 : 0
+  const dashaInfluence = dasha.mahaDasha === 'Jupiter' ? 1 : dasha.mahaDasha === 'Saturn' ? -0.5 : 0
   
-  return Math.min(100, Math.max(1, baseScore + transitBoost + dashaInfluence))
+  return Math.min(10, Math.max(1, baseScore + transitBoost + dashaInfluence))
 }

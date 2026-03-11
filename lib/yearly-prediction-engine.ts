@@ -163,9 +163,9 @@ function generateQuarterlyFocus(transits: any[], year: number) {
 }
 
 function calculateYearlyScore(transits: any[], dasha: any): number {
-  const baseScore = 70
-  const transitQuality = transits.filter(t => ['Jupiter', 'Venus'].includes(t.planet)).length * 5
-  const dashaBonus = dasha.currentMahaDasha === 'Jupiter' ? 15 : dasha.currentMahaDasha === 'Saturn' ? -10 : 0
+  const baseScore = 7.0
+  const transitQuality = transits.filter(t => ['Jupiter', 'Venus'].includes(t.planet)).length * 0.5
+  const dashaBonus = dasha.currentMahaDasha === 'Jupiter' ? 1.5 : dasha.currentMahaDasha === 'Saturn' ? -1 : 0
   
-  return Math.min(100, Math.max(1, baseScore + transitQuality + dashaBonus))
+  return Math.min(10, Math.max(1, baseScore + transitQuality + dashaBonus))
 }
