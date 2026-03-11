@@ -19,7 +19,9 @@ import {
   AlertCircle,
   Target,
   Lightbulb,
-  LogOut
+  LogOut,
+  Clock,
+  Sun
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { generateDailyPrediction } from '@/lib/daily-prediction-engine'
@@ -453,7 +455,47 @@ export default function DailyPredictionPage() {
                 </CardContent>
               </Card>
 
-              {/* Get New Prediction */}
+              {/* Best Timings */}
+              <div className="grid md:grid-cols-2 gap-4">
+                <Card className="bg-gradient-to-br from-blue-950/20 to-blue-900/10 border-blue-500/30">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Clock className="w-5 h-5 text-blue-400" />
+                      Best Times Today
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-2">
+                      {prediction.bestTimings.map((timing, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm">
+                          <span className="text-blue-400 mt-1">→</span>
+                          <span className="text-foreground/80">{timing}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+
+                {/* Muhurta Windows */}
+                <Card className="bg-gradient-to-br from-violet-950/20 to-violet-900/10 border-violet-500/30">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Sun className="w-5 h-5 text-violet-400" />
+                      Muhurta Windows
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-2">
+                      {prediction.muhurtaWindows.map((window, i) => (
+                        <li key={i} className="text-xs">
+                          <p className="font-semibold text-violet-300">{window.time}</p>
+                          <p className="text-foreground/70">{window.activity}</p>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              </div>
               <Button
                 onClick={() => setPrediction(null)}
                 variant="outline"
