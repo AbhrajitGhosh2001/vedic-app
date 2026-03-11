@@ -370,8 +370,8 @@ export default function ProfileInsightsPage() {
             </div>
           </SectionWrapper>
 
-          {/* Planetary Placements */}
-          <SectionWrapper title="Planetary Placements" icon={Target}>
+          {/* Planetary Deep Dive */}
+          <SectionWrapper title="Planetary Deep Dive" icon={Target}>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {insights.planetaryPlacements.map((planet, i) => (
                 <Card key={i} className="bg-card/30 border-border/30">
