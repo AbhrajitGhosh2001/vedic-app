@@ -246,7 +246,7 @@ export default function DailyPredictionPage() {
           >
             <div className="inline-flex items-center gap-2 bg-primary/15 text-primary px-4 py-2 rounded-full text-sm font-medium mb-6">
               <Sparkles className="w-4 h-4" />
-              {userProfile.first_name}'s Daily Cosmic Guidance
+              {userProfile.first_name}'s {predictionType.charAt(0).toUpperCase() + predictionType.slice(1)} Cosmic Guidance
             </div>
             
             <h1 className="text-5xl md:text-6xl font-bold mb-4">
@@ -439,7 +439,9 @@ export default function DailyPredictionPage() {
               {/* Daily Score */}
               <Card className="bg-gradient-to-r from-primary/20 to-accent/20 border-primary/30">
                 <CardContent className="p-8 text-center">
-                  <p className="text-muted-foreground mb-2">Today's Cosmic Energy Score</p>
+                  <p className="text-muted-foreground mb-2">
+                    {predictionType === 'daily' ? "Today's" : predictionType === 'monthly' ? "This Month's" : "This Year's"} Cosmic Energy Score
+                  </p>
                   <div className="flex items-center justify-center gap-3">
                     <span className="text-6xl font-bold text-primary">{prediction.dailyScore}</span>
                     <div className="flex flex-col items-start">
@@ -475,7 +477,7 @@ export default function DailyPredictionPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-xl">
                     <Heart className="w-5 h-5 text-purple-400" />
-                    How Today Affects You
+                    {predictionType === 'daily' ? "How Today Affects You" : predictionType === 'monthly' ? "Monthly Energy Focus" : "Annual Transformation"}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -488,7 +490,7 @@ export default function DailyPredictionPage() {
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-xl">
                     <Heart className="w-5 h-5 text-pink-400" />
-                    Emotional Energy Today
+                    {predictionType === 'daily' ? "Emotional Energy Today" : predictionType === 'monthly' ? "Monthly Emotional Landscape" : "Yearly Emotional Journey"}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -558,7 +560,7 @@ export default function DailyPredictionPage() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
                       <Clock className="w-5 h-5 text-blue-400" />
-                      Best Times Today
+                      {predictionType === 'daily' ? "Best Times Today" : predictionType === 'monthly' ? "Best Times This Month" : "Best Times This Year"}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -578,7 +580,7 @@ export default function DailyPredictionPage() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-lg">
                       <Sun className="w-5 h-5 text-violet-400" />
-                      Muhurta Windows
+                      {predictionType === 'daily' ? "Muhurta Windows" : predictionType === 'monthly' ? "Important Dates" : "Key Periods"}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -660,7 +662,9 @@ export default function DailyPredictionPage() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-2xl font-bold mb-8 text-center">How Daily Predictions Work</h2>
+            <h2 className="text-2xl font-bold mb-8 text-center">
+              How {predictionType.charAt(0).toUpperCase() + predictionType.slice(1)} Predictions Work
+            </h2>
             
             <div className="grid md:grid-cols-3 gap-6">
               <Card className="bg-card/30 border-border/30">
@@ -682,7 +686,7 @@ export default function DailyPredictionPage() {
                   </div>
                   <h3 className="font-semibold mb-2">Your Birth Chart</h3>
                   <p className="text-sm text-muted-foreground">
-                    Your unique birth data is analyzed against today's cosmic movements
+                    Your unique birth data is analyzed against {predictionType === 'daily' ? "today's" : predictionType === 'monthly' ? "this month's" : "this year's"} cosmic movements
                   </p>
                 </CardContent>
               </Card>
