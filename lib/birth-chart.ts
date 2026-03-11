@@ -1,5 +1,7 @@
 import type { BirthData, VedicChart } from './types'
 
+export type { VedicChart }
+
 // ==================== VEDIC ASTROLOGY - PURE JAVASCRIPT ====================
 // Pure JS implementation for accurate sidereal zodiac calculations
 // Uses Lahiri Ayanamsa (standard for Vedic astrology)

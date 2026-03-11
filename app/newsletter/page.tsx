@@ -25,6 +25,9 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { generateDailyPrediction } from '@/lib/daily-prediction-engine'
+import { generateMonthlyPrediction } from '@/lib/monthly-prediction-engine'
+import { generateYearlyPrediction } from '@/lib/yearly-prediction-engine'
+import { ButtonGroup } from '@/components/ui/button-group'
 
 const TIMEZONES = [
   { value: 'America/New_York', label: 'Eastern Time (ET)' },
@@ -87,6 +90,9 @@ export default function DailyPredictionPage() {
   const [isPredictionLoading, setIsPredictionLoading] = useState(false)
   const [prediction, setPrediction] = useState<DailyPrediction | null>(null)
   const [currentTime, setCurrentTime] = useState('')
+  const [predictionType, setPredictionType] = useState<'daily' | 'monthly' | 'yearly'>('daily')
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1)
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
 
   // Check authentication and fetch user profile
   useEffect(() => {
@@ -157,7 +163,6 @@ export default function DailyPredictionPage() {
 
     setIsPredictionLoading(true)
     try {
-      // Build natal chart object from user profile
       const natalChart = {
         sun_sign: userProfile.sun_sign,
         moon_sign: userProfile.moon_sign,
@@ -166,21 +171,28 @@ export default function DailyPredictionPage() {
         mars_house: userProfile.mars_house || 5,
       }
 
-      // Generate deterministic prediction using the prediction engine
-      const enginePrediction = generateDailyPrediction(natalChart as any, userProfile.birth_date)
+      let enginePrediction: any
+
+      if (predictionType === 'daily') {
+        enginePrediction = generateDailyPrediction(natalChart as any, userProfile.birth_date)
+      } else if (predictionType === 'monthly') {
+        enginePrediction = generateMonthlyPrediction(natalChart as any, userProfile.birth_date, selectedMonth, selectedYear)
+      } else {
+        enginePrediction = generateYearlyPrediction(natalChart as any, userProfile.birth_date, selectedYear)
+      }
 
       // Convert engine output to UI format
       const predictionOutput: DailyPrediction = {
         cosmicWeather: enginePrediction.cosmicWeather,
-        personalImpact: enginePrediction.personalEnergyToday,
+        personalImpact: enginePrediction.personalEnergyToday || enginePrediction.personalEnergyFocus,
         emotionalEnergy: enginePrediction.emotionalTone,
         opportunities: enginePrediction.opportunities,
         challenges: enginePrediction.challenges,
-        guidance: enginePrediction.dailyGuidance,
-        dailyScore: Math.round(enginePrediction.energyIndex.score),
-        bestTimings: enginePrediction.bestTimings,
-        muhurtaWindows: enginePrediction.muhurtaWindows,
-        currentPlanetaryPlacements: enginePrediction.currentPlanetaryPlacements,
+        guidance: enginePrediction.dailyGuidance || enginePrediction.guidance,
+        dailyScore: Math.round(enginePrediction.energyIndex?.score || enginePrediction.monthlyScore || enginePrediction.yearlyScore),
+        bestTimings: enginePrediction.bestTimings || [],
+        muhurtaWindows: enginePrediction.muhurtaWindows || [],
+        currentPlanetaryPlacements: enginePrediction.currentPlanetaryPlacements || [],
       }
 
       // Simulate slight delay for processing feel
@@ -233,12 +245,37 @@ export default function DailyPredictionPage() {
             </div>
             
             <h1 className="text-5xl md:text-6xl font-bold mb-4">
-              Your Daily <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Prediction</span>
+              Your <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{predictionType.charAt(0).toUpperCase() + predictionType.slice(1)}</span> Prediction
             </h1>
             
             <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Personalized Vedic astrology insights for {userProfile.sun_sign} Sun, {userProfile.moon_sign} Moon, {userProfile.lagna} Ascendant
+              Personalized Vedic astrology insights for {userProfile.first_name} - {userProfile.sun_sign} Sun, {userProfile.moon_sign} Moon, {userProfile.lagna} Ascendant
             </p>
+
+            {/* Prediction Type Tabs */}
+            <div className="flex justify-center gap-3 mb-6">
+              <Button
+                variant={predictionType === 'daily' ? 'default' : 'outline'}
+                onClick={() => setPredictionType('daily')}
+                className="px-6"
+              >
+                Daily
+              </Button>
+              <Button
+                variant={predictionType === 'monthly' ? 'default' : 'outline'}
+                onClick={() => setPredictionType('monthly')}
+                className="px-6"
+              >
+                Monthly
+              </Button>
+              <Button
+                variant={predictionType === 'yearly' ? 'default' : 'outline'}
+                onClick={() => setPredictionType('yearly')}
+                className="px-6"
+              >
+                Yearly
+              </Button>
+            </div>
 
             <Button
               onClick={handleLogout}
@@ -295,6 +332,47 @@ export default function DailyPredictionPage() {
                       </p>
                     )}
                   </div>
+
+                  {/* Month and Year Selection for Monthly/Yearly */}
+                  {predictionType !== 'daily' && (
+                    <div className="grid grid-cols-2 gap-4">
+                      {predictionType === 'monthly' && (
+                        <div className="space-y-2">
+                          <label className="text-sm font-semibold text-foreground">Month</label>
+                          <Select value={selectedMonth.toString()} onValueChange={(v) => setSelectedMonth(parseInt(v))}>
+                            <SelectTrigger className="h-10 bg-background/50 border-primary/30">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {Array.from({ length: 12 }).map((_, i) => (
+                                <SelectItem key={i + 1} value={(i + 1).toString()}>
+                                  {new Date(2024, i).toLocaleString('default', { month: 'long' })}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+                      <div className="space-y-2">
+                        <label className="text-sm font-semibold text-foreground">Year</label>
+                        <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
+                          <SelectTrigger className="h-10 bg-background/50 border-primary/30">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.from({ length: 5 }).map((_, i) => {
+                              const year = new Date().getFullYear() - 2 + i
+                              return (
+                                <SelectItem key={year} value={year.toString()}>
+                                  {year}
+                                </SelectItem>
+                              )
+                            })}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="p-4 rounded-lg bg-primary/10 border border-primary/30">
                     <h4 className="font-semibold mb-2 text-sm">Your Birth Profile</h4>
