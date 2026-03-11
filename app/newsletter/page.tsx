@@ -142,6 +142,11 @@ export default function DailyPredictionPage() {
     }
   }, [timezone])
 
+  // Reset prediction when prediction type changes
+  useEffect(() => {
+    setPrediction(null)
+  }, [predictionType, selectedMonth, selectedYear])
+
   const updateCurrentTime = (tz: string) => {
     try {
       const now = new Date()
@@ -404,12 +409,12 @@ export default function DailyPredictionPage() {
                     {isPredictionLoading ? (
                       <>
                         <Sparkles className="w-4 h-4 mr-2 animate-spin" />
-                        Generating Prediction...
+                        Generating {predictionType.charAt(0).toUpperCase() + predictionType.slice(1)} Prediction...
                       </>
                     ) : (
                       <>
                         <Zap className="w-4 h-4 mr-2" />
-                        Get Your Daily Prediction
+                        Get Your {predictionType.charAt(0).toUpperCase() + predictionType.slice(1)} Prediction
                       </>
                     )}
                   </Button>
