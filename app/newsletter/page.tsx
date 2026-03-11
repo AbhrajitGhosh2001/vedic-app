@@ -537,55 +537,6 @@ import {
   Lightbulb
 } from 'lucide-react'
 
-const TIMEZONES = [
-  { value: 'America/New_York', label: 'Eastern Time (ET)' },
-  { value: 'America/Chicago', label: 'Central Time (CT)' },
-  { value: 'America/Denver', label: 'Mountain Time (MT)' },
-  { value: 'America/Los_Angeles', label: 'Pacific Time (PT)' },
-  { value: 'America/Phoenix', label: 'Arizona (MST)' },
-  { value: 'Europe/London', label: 'London (GMT)' },
-  { value: 'Europe/Paris', label: 'Paris (CET)' },
-  { value: 'Europe/Berlin', label: 'Berlin (CET)' },
-  { value: 'Asia/Tokyo', label: 'Tokyo (JST)' },
-  { value: 'Asia/Shanghai', label: 'Shanghai (CST)' },
-  { value: 'Asia/Kolkata', label: 'India (IST)' },
-  { value: 'Asia/Dubai', label: 'Dubai (GST)' },
-  { value: 'Australia/Sydney', label: 'Sydney (AEDT)' },
-  { value: 'Australia/Melbourne', label: 'Melbourne (AEDT)' },
-]
-
-interface DailyPrediction {
-  cosmicWeather: string
-  personalImpact: string
-  emotionalEnergy: string
-  opportunities: string[]
-  challenges: string[]
-  guidance: string
-  dailyScore: number
-}
-
-export default function DailyPredictionPage() {
-  const [timezone, setTimezone] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [prediction, setPrediction] = useState<DailyPrediction | null>(null)
-  const [currentTime, setCurrentTime] = useState('')
-
-  // Auto-detect user's timezone on mount
-  useEffect(() => {
-    const detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone
-    setTimezone(detectedTimezone)
-    updateCurrentTime(detectedTimezone)
-  }, [])
-
-  // Update time whenever timezone changes
-  useEffect(() => {
-    if (timezone) {
-      updateCurrentTime(timezone)
-      const interval = setInterval(() => updateCurrentTime(timezone), 60000)
-      return () => clearInterval(interval)
-    }
-  }, [timezone])
-
   const updateCurrentTime = (tz: string) => {
     try {
       const now = new Date()
