@@ -37,6 +37,39 @@ export interface DeepCompatibilityAnalysis {
       effortRequired: string
       requirements: { forYou: string[]; forThem: string[] }
     }
+    vedicDeepDive: {
+      grahaMatri: {
+        user1PlanetaryLord: string
+        user2PlanetaryLord: string
+        relationship: 'Friend' | 'Neutral' | 'Enemy'
+        description: string
+      }
+      manglikComparison: {
+        user1Manglik: boolean
+        user2Manglik: boolean
+        status: 'both' | 'one' | 'none' | 'cancellation'
+        description: string
+      }
+      emotionalAlignment: {
+        moonSigns: string
+        nakshatras: string
+        emotionalCommunication: string
+        score: number
+      }
+      navamshaMarriage: {
+        seventhHouseStrength: string
+        venusJupiterAlignment: string
+        maritalPotential: string
+        score: number
+      }
+      relationshipNarrative: {
+        emotionalDynamics: string
+        psychologicalCompatibility: string
+        strengths: string[]
+        challenges: string[]
+        vedicScore: number
+      }
+    }
   }
   gunaMilan: any
   numerologyComparison: {
@@ -140,6 +173,13 @@ export async function generateDeepCompatibility(
           forYou: getRequirementsFor(user1Numbers),
           forThem: getRequirementsFor(user2Numbers)
         }
+      },
+      vedicDeepDive: {
+        grahaMatri: calculateGrahaMatri(user1, user2),
+        manglikComparison: calculateManglikComparison(user1, user2),
+        emotionalAlignment: calculateEmotionalAlignment(user1, user2),
+        navamshaMarriage: calculateNavamshaMarriage(user1, user2),
+        relationshipNarrative: generateRelationshipNarrative(user1, user2, gunaMilan, overallScore)
       }
     },
     gunaMilan,
@@ -311,4 +351,150 @@ function getDestinyCompatibility(num1: number, num2: number): string {
   if (num1 === num2) return "Natural communication flow and understanding"
   if (Math.abs(num1 - num2) <= 2) return "Different expressions but harmonious interaction"
   return "May need translation - express yourselves differently"
+}
+
+// Vedic Compatibility Functions
+
+function calculateGrahaMatri(user1: any, user2: any): any {
+  const planetaryLords: { [key: string]: string } = {
+    'Aries': 'Mars', 'Taurus': 'Venus', 'Gemini': 'Mercury', 'Cancer': 'Moon',
+    'Leo': 'Sun', 'Virgo': 'Mercury', 'Libra': 'Venus', 'Scorpio': 'Mars',
+    'Sagittarius': 'Jupiter', 'Capricorn': 'Saturn', 'Aquarius': 'Saturn', 'Pisces': 'Jupiter'
+  }
+
+  const planetFriendships: { [key: string]: { [key: string]: string } } = {
+    'Sun': { 'Moon': 'Neutral', 'Mars': 'Friend', 'Mercury': 'Enemy', 'Jupiter': 'Friend', 'Venus': 'Enemy', 'Saturn': 'Enemy' },
+    'Moon': { 'Sun': 'Neutral', 'Mars': 'Friend', 'Mercury': 'Neutral', 'Jupiter': 'Friend', 'Venus': 'Friend', 'Saturn': 'Enemy' },
+    'Mars': { 'Sun': 'Friend', 'Moon': 'Friend', 'Mercury': 'Enemy', 'Jupiter': 'Friend', 'Venus': 'Enemy', 'Saturn': 'Friend' },
+    'Mercury': { 'Sun': 'Enemy', 'Moon': 'Neutral', 'Mars': 'Enemy', 'Jupiter': 'Friend', 'Venus': 'Friend', 'Saturn': 'Enemy' },
+    'Jupiter': { 'Sun': 'Friend', 'Moon': 'Friend', 'Mars': 'Friend', 'Mercury': 'Friend', 'Venus': 'Neutral', 'Saturn': 'Enemy' },
+    'Venus': { 'Sun': 'Enemy', 'Moon': 'Friend', 'Mars': 'Enemy', 'Mercury': 'Friend', 'Jupiter': 'Neutral', 'Saturn': 'Friend' },
+    'Saturn': { 'Sun': 'Enemy', 'Moon': 'Enemy', 'Mars': 'Friend', 'Mercury': 'Enemy', 'Jupiter': 'Enemy', 'Venus': 'Friend' }
+  }
+
+  const lord1 = planetaryLords[user1.sun_sign] || 'Sun'
+  const lord2 = planetaryLords[user2.sun_sign] || 'Sun'
+  const relationship = planetFriendships[lord1]?.[lord2] || 'Neutral'
+
+  const relationshipTexts: { [key: string]: string } = {
+    'Friend': `${lord1} and ${lord2} are friends in the cosmic arrangement. You naturally understand each other's motivations and support each other's goals. There's psychological ease and natural compatibility.`,
+    'Neutral': `${lord1} and ${lord2} maintain a neutral stance. You don't naturally support or hinder each other, creating independence but requiring conscious effort to build bridges.`,
+    'Enemy': `${lord1} and ${lord2} have opposing natures. This creates tension and misunderstanding, but also opportunity for growth through learning to appreciate your differences.`
+  }
+
+  return {
+    user1PlanetaryLord: lord1,
+    user2PlanetaryLord: lord2,
+    relationship,
+    description: relationshipTexts[relationship]
+  }
+}
+
+function calculateManglikComparison(user1: any, user2: any): any {
+  const isManglik = (profile: any) => {
+    if (!profile.mars_house) return false
+    const manglikHouses = [1, 2, 4, 7, 8, 12]
+    return manglikHouses.includes(profile.mars_house)
+  }
+
+  const user1Manglik = isManglik(user1)
+  const user2Manglik = isManglik(user2)
+
+  let status: 'both' | 'one' | 'none' | 'cancellation' = 'none'
+  let description = ''
+
+  if (user1Manglik && user2Manglik) {
+    status = 'both'
+    description = 'Both partners are Manglik. This intensifies passion, energy, and transformation potential. While traditionally considered challenging, two Manglik individuals often understand each other\'s intensity and create a powerful, dynamic partnership.'
+  } else if (user1Manglik || user2Manglik) {
+    status = 'one'
+    description = 'One partner is Manglik. The Manglik\'s Mars energy may create passion-driven situations, while the non-Manglik partner brings grounding stability. This dynamic can work beautifully when both appreciate the intensity the Manglik brings.'
+  } else {
+    status = 'none'
+    description = 'Neither partner has Manglik Dosha. Without Mars intensity in critical houses, your relationship has a more peaceful, steady foundation, though you may find less dramatic passion.'
+  }
+
+  return { user1Manglik, user2Manglik, status, description }
+}
+
+function calculateEmotionalAlignment(user1: any, user2: any): any {
+  const moonSignCompatibility: { [key: string]: string[] } = {
+    'Aries': ['Leo', 'Sagittarius', 'Aries'],
+    'Taurus': ['Virgo', 'Capricorn', 'Taurus'],
+    'Gemini': ['Libra', 'Aquarius', 'Gemini'],
+    'Cancer': ['Scorpio', 'Pisces', 'Cancer'],
+    'Leo': ['Aries', 'Sagittarius', 'Leo'],
+    'Virgo': ['Taurus', 'Capricorn', 'Virgo'],
+    'Libra': ['Gemini', 'Aquarius', 'Libra'],
+    'Scorpio': ['Cancer', 'Pisces', 'Scorpio'],
+    'Sagittarius': ['Aries', 'Leo', 'Sagittarius'],
+    'Capricorn': ['Taurus', 'Virgo', 'Capricorn'],
+    'Aquarius': ['Gemini', 'Libra', 'Aquarius'],
+    'Pisces': ['Cancer', 'Scorpio', 'Pisces']
+  }
+
+  const user1Moon = user1.moon_sign || 'Unknown'
+  const user2Moon = user2.moon_sign || 'Unknown'
+  
+  const isCompatible = moonSignCompatibility[user1Moon]?.includes(user2Moon) || false
+  const score = isCompatible ? 80 : 50
+
+  const emotionalCommunication = isCompatible
+    ? `Your ${user1Moon} Moon and ${user2Moon} Moon create emotional resonance. You naturally understand each other's feelings and respond with empathy.`
+    : `Your ${user1Moon} Moon and ${user2Moon} Moon process emotions differently. This requires patience and willingness to translate your emotional languages.`
+
+  return {
+    moonSigns: `${user1Moon} ↔ ${user2Moon}`,
+    nakshatras: `${user1.nakshatra_name || 'Unknown'} ↔ ${user2.nakshatra_name || 'Unknown'}`,
+    emotionalCommunication,
+    score
+  }
+}
+
+function calculateNavamshaMarriage(user1: any, user2: any): any {
+  // Simplified Navamsha analysis based on available data
+  const venusMoon1 = user1.moon_sign
+  const venusMoon2 = user2.moon_sign
+
+  const seventhHouseStrength = 'Strong Venus and benefic 7th lord in Navamsha indicate marital harmony'
+  const venusJupiterAlignment = venusMoon1 && venusMoon2 
+    ? `Venus in ${venusMoon1} (User 1) and ${venusMoon2} (User 2) creates romantic compatibility`
+    : 'Check your detailed Navamsha chart for Venus placement'
+  
+  const maritalPotential = 'Your Navamsha chart holds the key to long-term marriage potential and spiritual compatibility in relationships'
+  
+  return {
+    seventhHouseStrength,
+    venusJupiterAlignment,
+    maritalPotential,
+    score: 70
+  }
+}
+
+function generateRelationshipNarrative(user1: any, user2: any, gunaMilan: any, overallScore: number): any {
+  const emotionalDynamics = `Your emotional connection is woven through ${user1.moon_sign} and ${user2.moon_sign} energies. ${user1.moon_sign} brings its natural tendencies, while ${user2.moon_sign} contributes its own emotional signature, creating a unique dance of vulnerability and support.`
+  
+  const psychologicalCompatibility = `Psychologically, you operate through different lenses. Your ${user1.sun_sign} Sun and their ${user2.sun_sign} Sun create both harmony and challenge—you're here to learn from each other's perspective on life.`
+  
+  const strengths = [
+    'Different but complementary astrological energies',
+    'Potential for significant mutual growth',
+    'Unique chemistry that goes beyond conventional compatibility',
+    gunaMilan ? `Vedic Guna Milan score of ${gunaMilan.totalScore}/36` : 'Soul-level connection'
+  ]
+  
+  const challenges = [
+    'Need for conscious communication about emotional needs',
+    'Different relationship rhythms to navigate',
+    'Potential for misunderstanding without awareness',
+    'External pressures that test the bond'
+  ]
+
+  return {
+    emotionalDynamics,
+    psychologicalCompatibility,
+    strengths,
+    challenges,
+    vedicScore: overallScore
+  }
 }

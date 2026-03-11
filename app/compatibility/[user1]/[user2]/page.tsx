@@ -309,6 +309,160 @@ export default function DeepCompatibilityPage({ params }: { params: { user1: str
           </div>
         </Section>
 
+        {/* Vedic Deep Dive */}
+        <Section icon={Sparkles} title="Vedic Deep Dive: Graha Maitri & Marital Destiny" delay={0.65}>
+          {/* Graha Maitri */}
+          <div className="grid md:grid-cols-2 gap-6 mb-6">
+            <Card className="bg-gradient-to-br from-primary/15 to-primary/5 border-primary/30">
+              <CardContent className="p-6">
+                <h4 className="font-bold text-lg mb-3 text-primary flex items-center gap-2">
+                  <Brain className="w-5 h-5" />
+                  Planetary Compatibility (Graha Maitri)
+                </h4>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">{user1Data.first_name}'s Planetary Lord</p>
+                    <Badge className="bg-primary/20 text-primary">{analysis.sections.vedicDeepDive.grahaMatri.user1PlanetaryLord}</Badge>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">{user2Data.first_name}'s Planetary Lord</p>
+                    <Badge className="bg-accent/20 text-accent">{analysis.sections.vedicDeepDive.grahaMatri.user2PlanetaryLord}</Badge>
+                  </div>
+                  <div className="p-3 rounded-lg bg-primary/10">
+                    <p className="text-xs font-semibold text-primary mb-1">Relationship: {analysis.sections.vedicDeepDive.grahaMatri.relationship}</p>
+                    <p className="text-sm text-foreground/80">{analysis.sections.vedicDeepDive.grahaMatri.description}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Manglik Dosha */}
+            <Card className="bg-gradient-to-br from-red-500/15 to-red-500/5 border-red-500/30">
+              <CardContent className="p-6">
+                <h4 className="font-bold text-lg mb-3 text-red-400 flex items-center gap-2">
+                  <Flame className="w-5 h-5" />
+                  Manglik Dosha Comparison
+                </h4>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">{user1Data.first_name}</span>
+                    <Badge className={analysis.sections.vedicDeepDive.manglikComparison.user1Manglik ? 'bg-red-500/30 text-red-300' : 'bg-green-500/30 text-green-300'}>
+                      {analysis.sections.vedicDeepDive.manglikComparison.user1Manglik ? 'Manglik' : 'Non-Manglik'}
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-muted-foreground">{user2Data.first_name}</span>
+                    <Badge className={analysis.sections.vedicDeepDive.manglikComparison.user2Manglik ? 'bg-red-500/30 text-red-300' : 'bg-green-500/30 text-green-300'}>
+                      {analysis.sections.vedicDeepDive.manglikComparison.user2Manglik ? 'Manglik' : 'Non-Manglik'}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-foreground/80 pt-2 border-t border-red-500/20">{analysis.sections.vedicDeepDive.manglikComparison.description}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Emotional Alignment */}
+          <Card className="bg-gradient-to-br from-accent/15 to-accent/5 border-accent/30 mb-6">
+            <CardContent className="p-6">
+              <h4 className="font-bold text-lg mb-4 text-accent flex items-center gap-2">
+                <Heart className="w-5 h-5" />
+                Emotional Alignment (Moon & Nakshatra)
+              </h4>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">Moon Signs</p>
+                  <p className="text-lg font-semibold text-foreground">{analysis.sections.vedicDeepDive.emotionalAlignment.moonSigns}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">Nakshatras</p>
+                  <p className="text-lg font-semibold text-foreground">{analysis.sections.vedicDeepDive.emotionalAlignment.nakshatras}</p>
+                </div>
+              </div>
+              <p className="text-foreground/80 mt-4 p-4 rounded-lg bg-background/50">{analysis.sections.vedicDeepDive.emotionalAlignment.emotionalCommunication}</p>
+              <div className="mt-4 flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Emotional Compatibility</span>
+                <div className="text-lg font-bold text-accent">{analysis.sections.vedicDeepDive.emotionalAlignment.score}%</div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Navamsha Marriage Potential */}
+          <Card className="bg-gradient-to-br from-purple-500/15 to-purple-500/5 border-purple-500/30 mb-6">
+            <CardContent className="p-6">
+              <h4 className="font-bold text-lg mb-4 text-purple-300 flex items-center gap-2">
+                <Target className="w-5 h-5" />
+                Long-Term Marriage Potential (Navamsha)
+              </h4>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm font-semibold text-purple-300 mb-1">7th House Strength</p>
+                  <p className="text-foreground/80">{analysis.sections.vedicDeepDive.navamshaMarriage.seventhHouseStrength}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-purple-300 mb-1">Venus & Jupiter Alignment</p>
+                  <p className="text-foreground/80">{analysis.sections.vedicDeepDive.navamshaMarriage.venusJupiterAlignment}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-purple-300 mb-1">Marital Destiny</p>
+                  <p className="text-foreground/80">{analysis.sections.vedicDeepDive.navamshaMarriage.maritalPotential}</p>
+                </div>
+                <div className="pt-4 border-t border-purple-500/20">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Marriage Potential Score</span>
+                    <div className="text-lg font-bold text-purple-300">{analysis.sections.vedicDeepDive.navamshaMarriage.score}%</div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Relationship Narrative Summary */}
+          <Card className="bg-gradient-to-br from-primary/20 to-accent/10 border-primary/30">
+            <CardContent className="p-6">
+              <h4 className="font-bold text-lg mb-4 text-primary">Your Vedic Relationship Narrative</h4>
+              <div className="space-y-6">
+                <div>
+                  <h5 className="font-semibold text-accent mb-2">Emotional Dynamics</h5>
+                  <p className="text-foreground/80">{analysis.sections.vedicDeepDive.relationshipNarrative.emotionalDynamics}</p>
+                </div>
+                <div>
+                  <h5 className="font-semibold text-accent mb-2">Psychological Compatibility</h5>
+                  <p className="text-foreground/80">{analysis.sections.vedicDeepDive.relationshipNarrative.psychologicalCompatibility}</p>
+                </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <h5 className="font-semibold text-green-400 mb-2">Strengths</h5>
+                    <ul className="space-y-2">
+                      {analysis.sections.vedicDeepDive.relationshipNarrative.strengths.map((strength: string, i: number) => (
+                        <li key={i} className="flex items-start gap-2 text-sm">
+                          <span className="text-green-400 mt-1">✓</span>
+                          <span className="text-foreground/80">{strength}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <h5 className="font-semibold text-orange-400 mb-2">Challenges</h5>
+                    <ul className="space-y-2">
+                      {analysis.sections.vedicDeepDive.relationshipNarrative.challenges.map((challenge: string, i: number) => (
+                        <li key={i} className="flex items-start gap-2 text-sm">
+                          <span className="text-orange-400 mt-1">→</span>
+                          <span className="text-foreground/80">{challenge}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+                <div className="p-4 rounded-lg bg-primary/10 border border-primary/20 text-center">
+                  <p className="text-sm text-muted-foreground mb-2">Vedic Compatibility Score</p>
+                  <p className="text-3xl font-bold text-primary">{analysis.sections.vedicDeepDive.relationshipNarrative.vedicScore}%</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Section>
+
         {/* Chinese Zodiac Compatibility */}
         {user1Data.birth_year && user2Data.birth_year && (
           <Section icon={Sparkles} title="Chinese Zodiac" delay={0.75}>
