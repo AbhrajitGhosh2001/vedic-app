@@ -22,6 +22,7 @@ import {
   LogOut
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { generateDailyPrediction } from '@/lib/daily-prediction-engine'
 
 const TIMEZONES = [
   { value: 'America/New_York', label: 'Eastern Time (ET)' },
@@ -60,6 +61,7 @@ interface UserProfile {
   moon_sign: string
   nakshatra_name: string
   lagna: string
+  mars_house?: number
 }
 
 export default function DailyPredictionPage() {
@@ -142,34 +144,32 @@ export default function DailyPredictionPage() {
 
     setIsPredictionLoading(true)
     try {
-      // Generate prediction based on user's birth chart and current transits
-      const personalNote = `Based on your birth chart (${userProfile.sun_sign} Sun, ${userProfile.moon_sign} Moon, ${userProfile.lagna} Ascendant, ${userProfile.nakshatra_name} Nakshatra)`
-
-      const mockPrediction: DailyPrediction = {
-        cosmicWeather: `Today's cosmic energy is uniquely shaped by the Moon transiting through a powerful phase in your timezone (${timezone.split('/')[1]}). The planetary alignment suggests a day of heightened intuition and emotional clarity. Mercury's favorable position indicates excellent communication opportunities, while Venus brings warmth to relationships. ${personalNote} suggests these energies will resonate particularly strongly with your natural inclinations.`,
-        personalImpact: `For you personally, today's transits create a harmonious alignment with your natal chart. Your ${userProfile.moon_sign} Moon is receiving gentle support, making this an ideal time for important conversations and decision-making. Your ${userProfile.lagna} Ascendant energy is activated, giving you natural charisma and confidence. Mars energy supports assertiveness in pursuing your goals, though patience may be required in the afternoon.`,
-        emotionalEnergy: `Your emotional landscape today is colored by your ${userProfile.nakshatra_name} nakshatra influence combined with today's ${userProfile.moon_sign} Moon phase. The current transits suggest introspection and intuitive wisdom. You may find yourself drawn to spiritual practices or meaningful connections. Allow yourself to feel deeply while maintaining healthy boundaries. Trust your instincts—they're particularly sharp today for someone with your birth chart.`,
-        opportunities: [
-          `Communication breakthroughs leveraging your ${userProfile.sun_sign} Sun clarity`,
-          'Creative projects gaining momentum with today\'s Mars support',
-          'Financial decisions favoring your growth and security',
-          'Spiritual or meditative practices proving beneficial for your Moon sign',
-          'Healing old emotional wounds through forgiveness and compassion'
-        ],
-        challenges: [
-          'Potential scattered energy in the morning—ground yourself with your birth time ritual',
-          'Others may project their emotions onto you—your Ascendant can attract this',
-          'Avoid major financial commitments without consulting trusted advisors',
-          'Mercury retrograde shadow may cause minor miscommunications in your sectors',
-          'Energy dips mid-afternoon—take a mindful break aligned with your rhythm'
-        ],
-        guidance: `Make this a day of intentional presence. Start with a grounding practice suited to your ${userProfile.moon_sign} emotional nature (meditation, journaling, or time in nature). Schedule important communications for mid-morning when your ${userProfile.sun_sign} mental clarity peaks. In relationships, lead with empathy—your birth chart shows deep capacity for this. For decisions: sleep on major choices. In the evening, reflect on what today taught you. This day is preparing you for significant growth ahead.`,
-        dailyScore: Math.floor(Math.random() * 3) + 7 // 7-9 range for demo
+      // Build natal chart object from user profile
+      const natalChart = {
+        sun_sign: userProfile.sun_sign,
+        moon_sign: userProfile.moon_sign,
+        lagna: userProfile.lagna,
+        nakshatra_name: userProfile.nakshatra_name,
+        mars_house: userProfile.mars_house || 5,
       }
 
-      // Simulate slight delay for API feel
-      await new Promise(resolve => setTimeout(resolve, 800))
-      setPrediction(mockPrediction)
+      // Generate deterministic prediction using the prediction engine
+      const enginePrediction = generateDailyPrediction(natalChart as any, userProfile.birth_date)
+
+      // Convert engine output to UI format
+      const predictionOutput: DailyPrediction = {
+        cosmicWeather: enginePrediction.cosmicWeather,
+        personalImpact: enginePrediction.personalEnergyToday,
+        emotionalEnergy: enginePrediction.emotionalTone,
+        opportunities: enginePrediction.opportunities,
+        challenges: enginePrediction.challenges,
+        guidance: enginePrediction.dailyGuidance,
+        dailyScore: Math.round(enginePrediction.energyIndex.score),
+      }
+
+      // Simulate slight delay for processing feel
+      await new Promise(resolve => setTimeout(resolve, 500))
+      setPrediction(predictionOutput)
     } catch (error) {
       console.error('[v0] Error generating prediction:', error)
       alert('Failed to generate prediction. Please try again.')
