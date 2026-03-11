@@ -53,6 +53,15 @@ interface DailyPrediction {
   dailyScore: number
   bestTimings: string[]
   muhurtaWindows: Array<{ time: string; activity: string }>
+  currentPlanetaryPlacements: Array<{
+    planet: string
+    sign: string
+    degree: number
+    house: number
+    retrograde: boolean
+    strength: string
+    nakshatraImpact: string
+  }>
 }
 
 interface UserProfile {
@@ -171,6 +180,7 @@ export default function DailyPredictionPage() {
         dailyScore: Math.round(enginePrediction.energyIndex.score),
         bestTimings: enginePrediction.bestTimings,
         muhurtaWindows: enginePrediction.muhurtaWindows,
+        currentPlanetaryPlacements: enginePrediction.currentPlanetaryPlacements,
       }
 
       // Simulate slight delay for processing feel
@@ -508,6 +518,52 @@ export default function DailyPredictionPage() {
                 <Calendar className="w-4 h-4 mr-2" />
                 Get Another Prediction
               </Button>
+
+              {/* Current Planetary Placements */}
+              <Card className="bg-gradient-to-br from-indigo-950/20 to-indigo-900/10 border-indigo-500/30">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <Sun className="w-5 h-5 text-indigo-400" />
+                    Today's Planetary Placements
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {prediction.currentPlanetaryPlacements.map((planet, i) => (
+                      <div
+                        key={i}
+                        className="p-4 rounded-lg bg-indigo-500/10 border border-indigo-500/20 space-y-2"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <h5 className="font-bold text-indigo-300">{planet.planet}</h5>
+                            <p className="text-sm text-muted-foreground">{planet.sign}</p>
+                          </div>
+                          {planet.retrograde && (
+                            <Badge className="bg-orange-500/20 text-orange-300 text-xs">R</Badge>
+                          )}
+                        </div>
+                        
+                        <div className="space-y-1 text-xs">
+                          <p className="text-foreground/70">
+                            <span className="text-muted-foreground">°</span> {planet.degree.toFixed(1)}°
+                          </p>
+                          <p className="text-foreground/70">
+                            <span className="text-muted-foreground">House:</span> {planet.house}
+                          </p>
+                          <p className="text-foreground/70 capitalize">
+                            <span className="text-muted-foreground">Strength:</span> {planet.strength.replace('_', ' ')}
+                          </p>
+                        </div>
+
+                        <div className="pt-2 border-t border-indigo-500/20">
+                          <p className="text-xs text-indigo-300 italic">{planet.nakshatraImpact}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
             </motion.div>
           )}
         </div>

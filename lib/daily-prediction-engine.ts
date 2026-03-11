@@ -63,9 +63,102 @@ export interface DailyPredictionOutput {
   bestTimings: string[]
   dailyGuidance: string
   muhurtaWindows: Array<{ time: string; activity: string }>
+  currentPlanetaryPlacements: Array<{
+    planet: string
+    sign: string
+    degree: number
+    house: number
+    retrograde: boolean
+    strength: string
+    nakshatraImpact: string
+  }>
 }
 
 // ============ LAYER 1: ASTRONOMY ENGINE ============
+
+// Calculate planetary positions for today
+function calculateCurrentPlanetaryPositions(date: Date) {
+  const dayOfYear = Math.floor(
+    (date.getTime() - new Date(date.getFullYear(), 0, 0).getTime()) / 86400000
+  )
+
+  const zodiacSigns = [
+    'Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
+    'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'
+  ]
+
+  const planets = ['Sun', 'Moon', 'Mars', 'Mercury', 'Jupiter', 'Venus', 'Saturn', 'Rahu', 'Ketu']
+  
+  // Each planet has different orbital speeds (deterministic calculation)
+  const orbitalSpeeds: { [key: string]: number } = {
+    'Sun': 1, // ~1 degree per day
+    'Moon': 13, // ~13 degrees per day
+    'Mercury': 1.2,
+    'Venus': 1.2,
+    'Mars': 0.5,
+    'Jupiter': 0.08,
+    'Saturn': 0.03,
+    'Rahu': -0.05, // retrograde motion
+    'Ketu': -0.05
+  }
+
+  const planetaryPositions: any[] = []
+
+  planets.forEach(planet => {
+    const speed = orbitalSpeeds[planet]
+    const totalDegrees = (dayOfYear * speed) % 360
+    const signIndex = Math.floor(totalDegrees / 30) % 12
+    const degree = totalDegrees % 30
+    const house = (Math.floor(totalDegrees / 30) % 12) + 1
+
+    // Determine strength based on sign placement
+    let strength = 'neutral'
+    const ownSigns: { [key: string]: string[] } = {
+      'Sun': ['Leo'],
+      'Moon': ['Cancer'],
+      'Mars': ['Aries', 'Scorpio'],
+      'Mercury': ['Gemini', 'Virgo'],
+      'Jupiter': ['Sagittarius', 'Pisces'],
+      'Venus': ['Taurus', 'Libra'],
+      'Saturn': ['Capricorn', 'Aquarius'],
+      'Rahu': ['Pisces'],
+      'Ketu': ['Virgo']
+    }
+
+    const exaltedSigns: { [key: string]: string } = {
+      'Sun': 'Aries',
+      'Moon': 'Taurus',
+      'Mars': 'Capricorn',
+      'Mercury': 'Virgo',
+      'Jupiter': 'Cancer',
+      'Venus': 'Pisces',
+      'Saturn': 'Libra',
+      'Rahu': 'Gemini',
+      'Ketu': 'Sagittarius'
+    }
+
+    const currentSign = zodiacSigns[signIndex]
+
+    if (exaltedSigns[planet] === currentSign) {
+      strength = 'very_strong'
+    } else if (ownSigns[planet]?.includes(currentSign)) {
+      strength = 'strong'
+    } else if (Math.abs(signIndex - 3) % 12 < 3) {
+      strength = 'weak' // Debilitated position
+    }
+
+    planetaryPositions.push({
+      planet,
+      sign: currentSign,
+      degree: Math.round(degree * 100) / 100,
+      house,
+      retrograde: planet === 'Rahu' || planet === 'Ketu' || (dayOfYear % 90 > 60 && Math.random() > 0.7),
+      strength
+    })
+  })
+
+  return planetaryPositions
+}
 
 function getAstronomicalData(date: Date) {
   // Deterministic calculation based on day of year
@@ -544,6 +637,12 @@ export function generateDailyPrediction(
 ): DailyPredictionOutput {
   // Layer 1: Get astronomical data
   const astronomicalData = getAstronomicalData(currentDate)
+  
+  // Layer 1: Calculate current planetary positions
+  const currentPlanetaryPlacements = calculateCurrentPlanetaryPositions(currentDate).map(p => ({
+    ...p,
+    nakshatraImpact: getNakshatraImpactDescription(p.planet, p.sign)
+  }))
 
   // Layer 8: Calculate planetary signals
   const signals = calculatePlanetarySignals(astronomicalData, natalChart)
@@ -574,6 +673,29 @@ export function generateDailyPrediction(
     energyIndex,
     bestTimings,
     muhurtaWindows,
+    currentPlanetaryPlacements,
     ...interpretations,
   }
+}
+
+// Helper function for Nakshatra impact descriptions
+function getNakshatraImpactDescription(planet: string, sign: string): string {
+  const impactMap: { [key: string]: string } = {
+    'Sun:Leo': 'Maximum power and confidence',
+    'Sun:Aries': 'Strong will and courage',
+    'Moon:Cancer': 'Emotional sensitivity and nurturing',
+    'Moon:Taurus': 'Stability and material focus',
+    'Mars:Aries': 'Direct action and leadership',
+    'Mars:Scorpio': 'Strategic power and transformation',
+    'Jupiter:Sagittarius': 'Expansion and wisdom',
+    'Jupiter:Pisces': 'Spiritual growth and intuition',
+    'Venus:Taurus': 'Sensuality and material comfort',
+    'Venus:Libra': 'Harmony and aesthetic appreciation',
+    'Mercury:Gemini': 'Communication and adaptability',
+    'Mercury:Virgo': 'Analytical skill and service',
+    'Saturn:Capricorn': 'Discipline and achievement',
+    'Saturn:Aquarius': 'Innovation within structure',
+  }
+  
+  return impactMap[`${planet}:${sign}`] || 'Neutral influence on daily affairs'
 }
