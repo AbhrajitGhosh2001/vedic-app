@@ -4,45 +4,67 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 
 export async function login(email: string, password: string) {
-  const supabase = await createClient()
+  try {
+    const supabase = await createClient()
 
-  const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  })
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
 
-  if (error) {
-    return { error: error.message }
+    if (error) {
+      // Check for server unavailable errors
+      if (error.message.includes('521') || error.message.includes('Web server is down')) {
+        return { error: 'Authentication service is temporarily unavailable. Please try again in a few minutes.' }
+      }
+      return { error: error.message }
+    }
+
+    return { success: true }
+  } catch (err: any) {
+    // Handle network/server errors
+    if (err?.message?.includes('521') || err?.message?.includes('fetch')) {
+      return { error: 'Authentication service is temporarily unavailable. Please try again in a few minutes.' }
+    }
+    return { error: 'An unexpected error occurred. Please try again.' }
   }
-
-  return { success: true }
 }
 
 export async function signup(email: string, password: string, firstName: string) {
-  const supabase = await createClient()
+  try {
+    const supabase = await createClient()
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://theaineed.com'
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://theaineed.com'
 
-  const { error, data } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      emailRedirectTo: `${appUrl}/auth/callback`,
-      data: {
-        first_name: firstName,
+    const { error, data } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${appUrl}/auth/callback`,
+        data: {
+          first_name: firstName,
+        },
       },
-    },
-  })
+    })
 
-  if (error) {
-    return { error: error.message }
+    if (error) {
+      if (error.message.includes('521') || error.message.includes('Web server is down')) {
+        return { error: 'Authentication service is temporarily unavailable. Please try again in a few minutes.' }
+      }
+      return { error: error.message }
+    }
+
+    if (data.user?.identities?.length === 0) {
+      return { error: 'User already exists' }
+    }
+
+    return { success: true, message: 'Check your email to confirm your account' }
+  } catch (err: any) {
+    if (err?.message?.includes('521') || err?.message?.includes('fetch')) {
+      return { error: 'Authentication service is temporarily unavailable. Please try again in a few minutes.' }
+    }
+    return { error: 'An unexpected error occurred. Please try again.' }
   }
-
-  if (data.user?.identities?.length === 0) {
-    return { error: 'User already exists' }
-  }
-
-  return { success: true, message: 'Check your email to confirm your account' }
 }
 
 export async function logout() {
